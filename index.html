@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Real-World Readiness Audit | LHUM400</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* ── Reset & Base ─────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:      #1a1a1a;
+      --mid:      #555;
+      --light:    #888;
+      --border:   #ddd;
+      --bg:       #f7f7f5;
+      --card:     #ffffff;
+      --navy:     #1c2b4a;
+      --accent:   #2d5fa6;
+      --accent-lt:#e8eef8;
+      --radius:   10px;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ───────────────────────────────────────────── */
+    .app-header {
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 28px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+    .app-header h1 { font-size: 1rem; font-weight: 600; letter-spacing: 0.02em; }
+    .app-header span { font-size: 0.8rem; opacity: 0.6; }
+    #progress-bar-wrap { background: #e0e4ec; height: 4px; }
+    #progress-bar { height: 4px; background: var(--accent); width: 0%; transition: width 0.35s ease; }
+
+    /* ── Screen control ───────────────────────────────────── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .container { max-width: 700px; margin: 0 auto; padding: 40px 24px 80px; }
+
+    /* ── Intro ────────────────────────────────────────────── */
+    .intro-title { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 6px; }
+    .intro-subtitle { color: var(--mid); font-size: 0.9rem; margin-bottom: 28px; }
+    .intro-body p { margin-bottom: 14px; }
+    .scale-table { width: 100%; border-collapse: collapse; margin: 20px 0 28px; font-size: 0.9rem; }
+    .scale-table th { background: var(--navy); color: #fff; padding: 8px 12px; text-align: left; font-weight: 600; }
+    .scale-table td { padding: 8px 12px; border-bottom: 1px solid var(--border); }
+    .scale-table tr:last-child td { border-bottom: none; }
+    .scale-table tr:nth-child(even) td { background: #f3f3f1; }
+    .rating-num { font-weight: 700; font-size: 1.05rem; color: var(--accent); width: 36px; }
+
+    .name-row { display: flex; gap: 12px; margin-bottom: 28px; flex-wrap: wrap; }
+    .name-row .field { flex: 1; min-width: 200px; }
+    .name-row label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; }
+    .name-row input {
+      width: 100%; padding: 10px 14px; border: 1.5px solid var(--border);
+      border-radius: var(--radius); font-size: 1rem; font-family: inherit;
+      outline: none; transition: border-color 0.2s;
+    }
+    .name-row input:focus { border-color: var(--accent); }
+
+    /* ── Buttons ──────────────────────────────────────────── */
+    .btn {
+      display: inline-block; padding: 12px 28px; border-radius: var(--radius);
+      font-size: 1rem; font-family: inherit; font-weight: 600;
+      cursor: pointer; border: none; transition: background 0.2s; text-decoration: none;
+    }
+    .btn-primary { background: var(--accent); color: #fff; }
+    .btn-primary:hover { background: #1e4a8a; }
+    .btn-secondary { background: var(--border); color: var(--ink); }
+    .btn-secondary:hover { background: #ccc; }
+    .btn-dark { background: var(--navy); color: #fff; }
+    .btn-dark:hover { background: #0f1d33; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* ── Question ─────────────────────────────────────────── */
+    .domain-label {
+      display: inline-block; background: var(--accent-lt); color: var(--accent);
+      font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em;
+      text-transform: uppercase; padding: 4px 10px; border-radius: 20px; margin-bottom: 16px;
+    }
+    .q-counter { font-size: 0.8rem; color: var(--light); margin-bottom: 8px; }
+    .q-text { font-size: 1.2rem; font-weight: 600; line-height: 1.4; margin-bottom: 28px; }
+    .scale-hint { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--light); margin-bottom: 20px; }
+
+    .rating-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 24px; }
+    .rating-btn {
+      aspect-ratio: 1; border: 2px solid var(--border); border-radius: var(--radius);
+      background: var(--card); cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 4px;
+      transition: border-color 0.15s, background 0.15s; padding: 8px 4px;
+    }
+    .rating-btn:hover { border-color: var(--accent); background: var(--accent-lt); }
+    .rating-btn.selected { border-color: var(--accent); background: var(--accent); color: #fff; }
+    .rating-btn .num { font-size: 1.5rem; font-weight: 700; line-height: 1; }
+    .rating-btn .lbl { font-size: 0.6rem; text-align: center; line-height: 1.2; opacity: 0.75; }
+    .rating-btn.selected .lbl { opacity: 0.85; }
+
+    .canned-response {
+      background: var(--accent-lt); border-left: 3px solid var(--accent);
+      border-radius: 0 var(--radius) var(--radius) 0;
+      padding: 14px 16px; font-size: 0.95rem; color: #1c3566;
+      margin-bottom: 24px; display: none;
+    }
+    .canned-response.visible { display: block; }
+    .q-nav { display: flex; gap: 12px; align-items: center; }
+
+    /* ── Results: screen-only wrapper ─────────────────────── */
+    .screen-only { display: block; }
+    .print-only  { display: none; }
+
+    /* ── Results header ───────────────────────────────────── */
+    .results-header { text-align: center; padding: 32px 0 24px; }
+    .results-header h2 { font-size: 1.6rem; font-weight: 700; margin-bottom: 4px; }
+    .result-meta { color: var(--mid); font-size: 0.9rem; margin-bottom: 28px; }
+    .score-circle-wrap { display: flex; flex-direction: column; align-items: center; margin-bottom: 20px; }
+    .score-circle {
+      width: 110px; height: 110px; border-radius: 50%; background: var(--navy); color: #fff;
+      display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 10px;
+    }
+    .score-circle .big-num { font-size: 2.2rem; font-weight: 800; line-height: 1; }
+    .score-circle .out-of { font-size: 0.7rem; opacity: 0.6; }
+    .band-label { font-size: 1.05rem; font-weight: 700; color: var(--accent); }
+    .band-desc { font-size: 0.85rem; color: var(--mid); text-align: center; max-width: 440px; margin: 4px auto 0; }
+
+    /* ── Domain breakdown ─────────────────────────────────── */
+    .section-heading {
+      font-size: 0.85rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+      color: var(--mid); margin: 28px 0 12px; padding-bottom: 6px; border-bottom: 1px solid var(--border);
+    }
+    .domain-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .domain-row-name { font-size: 0.82rem; width: 195px; flex-shrink: 0; }
+    .domain-bar-wrap { flex: 1; background: #e8e8e5; border-radius: 4px; height: 9px; overflow: hidden; }
+    .domain-bar { height: 9px; border-radius: 4px; background: var(--accent); transition: width 0.6s ease; }
+    .domain-score-text { font-size: 0.78rem; font-weight: 700; width: 40px; text-align: right; flex-shrink: 0; }
+    .domain-band-chip {
+      font-size: 0.67rem; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+      width: 54px; text-align: center; flex-shrink: 0;
+    }
+    .chip-strong { background: #d4edda; color: #155724; }
+    .chip-solid  { background: #cce5ff; color: #004085; }
+    .chip-patchy { background: #fff3cd; color: #856404; }
+    .chip-bare   { background: #f8d7da; color: #721c24; }
+
+    /* ── Full report (screen) ─────────────────────────────── */
+    .report-domain-block { margin-bottom: 28px; }
+    .report-domain-title {
+      font-size: 0.9rem; font-weight: 700; color: var(--navy);
+      padding: 7px 12px; background: var(--accent-lt); border-radius: var(--radius); margin-bottom: 10px;
+    }
+    .report-q-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 14px; margin-bottom: 8px; background: var(--card); }
+    .report-q-top { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
+    .report-q-rating {
+      flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+      background: var(--navy); color: #fff; font-size: 0.9rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .report-q-text { font-size: 0.875rem; font-weight: 600; flex: 1; }
+    .report-q-advice { font-size: 0.845rem; color: var(--mid); line-height: 1.55; padding-left: 40px; }
+
+    /* ── Toolkit (screen) ─────────────────────────────────── */
+    .toolkit-intro { font-size: 0.875rem; color: var(--mid); margin-bottom: 20px; }
+    .toolkit-domain { margin-bottom: 24px; }
+    .toolkit-domain-title {
+      font-size: 0.875rem; font-weight: 700; color: var(--navy);
+      background: var(--accent-lt); padding: 6px 12px; border-radius: var(--radius); margin-bottom: 10px;
+    }
+    .toolkit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .toolkit-card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 12px 14px; background: var(--card); text-decoration: none; color: inherit;
+      display: block; transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .toolkit-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(45,95,166,0.12); }
+    .toolkit-card-label { font-size: 0.875rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+    .toolkit-card-desc { font-size: 0.78rem; color: var(--mid); line-height: 1.4; }
+    .toolkit-card-url { font-size: 0.72rem; color: var(--light); margin-top: 6px; }
+
+    /* ── What to do / action list ─────────────────────────── */
+    .action-list { list-style: none; counter-reset: ac; }
+    .action-list li {
+      counter-increment: ac; display: flex; gap: 10px; align-items: flex-start;
+      padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 0.875rem;
+    }
+    .action-list li:last-child { border-bottom: none; }
+    .action-list li::before {
+      content: counter(ac); flex-shrink: 0; width: 24px; height: 24px; border-radius: 50%;
+      background: var(--accent); color: #fff; font-size: 0.75rem; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; margin-top: 2px;
+    }
+
+    .results-actions { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 32px; padding-top: 24px; border-top: 1px solid var(--border); }
+    .footer-attr { font-size: 0.72rem; color: var(--light); margin-top: 32px; text-align: center; font-style: italic; }
+
+    /* ═══════════════════════════════════════════════════════
+       PRINT STYLES — max 2 pages
+    ═══════════════════════════════════════════════════════ */
+    @media print {
+      @page { size: letter; margin: 0.42in 0.5in; }
+
+      body { background: #fff; font-size: 8.5pt; }
+      .app-header { padding: 8px 14px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .app-header h1 { font-size: 9pt; }
+      .app-header span { font-size: 7.5pt; }
+      #progress-bar-wrap { display: none; }
+
+      #screen-intro, #screen-question { display: none !important; }
+      #screen-results { display: block !important; }
+
+      .screen-only { display: none !important; }
+      .print-only  { display: block !important; }
+
+      /* ── Print page 1 ── */
+      .p1-header { margin-bottom: 8pt; }
+      .p1-header h2 { font-size: 14pt; font-weight: 700; margin-bottom: 1pt; }
+      .p1-header p  { font-size: 8pt; color: #555; }
+
+      .p1-top { display: flex; gap: 18pt; align-items: flex-start; margin-bottom: 10pt; }
+
+      .p1-score-col { flex-shrink: 0; text-align: center; }
+      .p1-score-circle {
+        width: 72pt; height: 72pt; border-radius: 50%;
+        background: var(--navy) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        color: #fff; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; margin: 0 auto 5pt;
+      }
+      .p1-score-circle .snum { font-size: 22pt; font-weight: 800; line-height: 1; }
+      .p1-score-circle .sof  { font-size: 6pt; opacity: 0.65; }
+      .p1-band-label { font-size: 9pt; font-weight: 700; color: var(--accent); }
+      .p1-band-desc  { font-size: 7pt; color: #555; max-width: 80pt; margin: 2pt auto 0; line-height: 1.3; }
+
+      .p1-domain-col { flex: 1; }
+      .p1-domain-heading { font-size: 7pt; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #888; margin-bottom: 5pt; border-bottom: 0.5pt solid #ddd; padding-bottom: 3pt; }
+      .p1-domain-row { display: flex; align-items: center; gap: 6pt; margin-bottom: 5pt; }
+      .p1-domain-name { font-size: 7pt; width: 130pt; flex-shrink: 0; line-height: 1.2; }
+      .p1-bar-wrap { flex: 1; background: #e8e8e5 !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; border-radius: 2pt; height: 7pt; overflow: hidden; }
+      .p1-bar { height: 7pt; border-radius: 2pt; background: var(--accent) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      .p1-score-txt { font-size: 7pt; font-weight: 700; width: 26pt; text-align: right; flex-shrink: 0; }
+      .p1-chip { font-size: 6pt; font-weight: 700; padding: 1pt 5pt; border-radius: 10pt; width: 36pt; text-align: center; flex-shrink: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+      .p1-priority-heading { font-size: 7.5pt; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: #888; margin-bottom: 6pt; border-bottom: 0.5pt solid #ddd; padding-bottom: 3pt; }
+      .p1-item { display: flex; gap: 7pt; margin-bottom: 6pt; align-items: flex-start; }
+      .p1-item-num {
+        flex-shrink: 0; width: 16pt; height: 16pt; border-radius: 50%;
+        background: var(--navy) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        color: #fff; font-size: 7pt; font-weight: 700; display: flex; align-items: center; justify-content: center;
+      }
+      .p1-item-body { flex: 1; }
+      .p1-item-q    { font-size: 7.5pt; font-weight: 700; margin-bottom: 2pt; line-height: 1.3; }
+      .p1-item-advice { font-size: 7pt; color: #444; line-height: 1.4; }
+
+      .p1-footer { margin-top: 10pt; font-size: 6.5pt; color: #888; font-style: italic; }
+
+      /* ── Print page 2 ── */
+      .print-page-break { page-break-before: always; }
+
+      .p2-header h2 { font-size: 12pt; font-weight: 700; margin-bottom: 2pt; }
+      .p2-header p  { font-size: 7.5pt; color: #555; margin-bottom: 10pt; }
+
+      .p2-domain { margin-bottom: 9pt; page-break-inside: avoid; break-inside: avoid; }
+      .p2-domain-title {
+        font-size: 7.5pt; font-weight: 700; color: var(--navy);
+        background: var(--accent-lt) !important; -webkit-print-color-adjust: exact; print-color-adjust: exact;
+        padding: 3pt 8pt; border-radius: 4pt; margin-bottom: 5pt;
+      }
+      .p2-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6pt; page-break-inside: avoid; break-inside: avoid; }
+      .p2-item { display: flex; gap: 5pt; align-items: flex-start; page-break-inside: avoid; break-inside: avoid; }
+      .p2-qr { flex-shrink: 0; width: 52pt; height: 52pt; }
+      .p2-qr canvas, .p2-qr img { width: 52pt !important; height: 52pt !important; display: block; }
+      .p2-qr-fallback { width: 52pt; height: 52pt; border: 0.5pt solid #ddd; border-radius: 3pt; display: flex; align-items: center; justify-content: center; font-size: 5.5pt; color: #888; text-align: center; padding: 3pt; }
+      .p2-text { flex: 1; }
+      .p2-label { font-size: 7.5pt; font-weight: 700; color: var(--accent); margin-bottom: 1pt; }
+      .p2-desc  { font-size: 6.5pt; color: #444; line-height: 1.35; margin-bottom: 2pt; }
+      .p2-url   { font-size: 6pt; color: #888; word-break: break-all; }
+
+      .p2-footer { margin-top: 12pt; font-size: 6.5pt; color: #888; font-style: italic; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-header">
+  <h1>Real-World Readiness Audit</h1>
+  <span>LHUM400 &nbsp;|&nbsp; Summer 2026 &nbsp;|&nbsp; Prof. Kramer Gibson &nbsp;|&nbsp; Berklee College of Music</span>
+</div>
+<div id="progress-bar-wrap"><div id="progress-bar"></div></div>
+
+<!-- ══ INTRO ══════════════════════════════════════════════ -->
+<div id="screen-intro" class="screen active">
+  <div class="container">
+    <h2 class="intro-title">Real-World Readiness Audit</h2>
+    <p class="intro-subtitle">LHUM400 &nbsp;&middot;&nbsp; Week 1 &nbsp;&middot;&nbsp; Summer 2026</p>
+    <div class="intro-body">
+      <p>This is a 20-question self-audit covering the practical skills, systems, and decisions you will need within twelve months of leaving Berklee. There are no right answers here, only honest ones.</p>
+      <p>Rate yourself 1 to 5 on each question. At the end you will get a Readiness Score, a per-domain breakdown, a personalized action plan, and a resource toolkit you can download and keep.</p>
+      <p>This is not a graded assignment. It is a private map of your starting point. We will re-take this survey in Week 12 and compare.</p>
+    </div>
+    <table class="scale-table">
+      <thead><tr><th class="rating-num">Rating</th><th>What it means</th></tr></thead>
+      <tbody>
+        <tr><td class="rating-num">1</td><td>I have not started. The thing does not exist yet.</td></tr>
+        <tr><td class="rating-num">2</td><td>I have thought about it but have not acted.</td></tr>
+        <tr><td class="rating-num">3</td><td>I have started, but it is partial or out of date.</td></tr>
+        <tr><td class="rating-num">4</td><td>I have a working version. It is real and current.</td></tr>
+        <tr><td class="rating-num">5</td><td>I have a polished, current, public-ready version that other people use or see.</td></tr>
+      </tbody>
+    </table>
+    <div class="name-row">
+      <div class="field">
+        <label for="student-name">Your name</label>
+        <input type="text" id="student-name" placeholder="First Last" autocomplete="name">
+      </div>
+      <div class="field">
+        <label for="student-email">Berklee email <span style="font-weight:400;color:var(--light)">(optional)</span></label>
+        <input type="email" id="student-email" placeholder="you@berklee.edu" autocomplete="email">
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="startSurvey()">Begin the audit &rarr;</button>
+  </div>
+</div>
+
+<!-- ══ QUESTION ════════════════════════════════════════════ -->
+<div id="screen-question" class="screen">
+  <div class="container">
+    <div id="domain-label" class="domain-label"></div>
+    <p id="q-counter" class="q-counter"></p>
+    <p id="q-text" class="q-text"></p>
+    <div class="scale-hint"><span>Not started</span><span>Polished &amp; public</span></div>
+    <div class="rating-grid" id="rating-grid"></div>
+    <div id="canned-response" class="canned-response"></div>
+    <div class="q-nav">
+      <button class="btn btn-primary" id="btn-next" onclick="nextQuestion()" disabled>Next &rarr;</button>
+      <button class="btn btn-secondary" id="btn-back" onclick="prevQuestion()">&#8592; Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ RESULTS ════════════════════════════════════════════ -->
+<div id="screen-results" class="screen">
+  <div class="container">
+
+    <!-- SCREEN-ONLY: full scrollable report ── -->
+    <div class="screen-only">
+      <div class="results-header">
+        <h2>Your Readiness Report</h2>
+        <p class="result-meta" id="result-meta-screen"></p>
+        <div class="score-circle-wrap">
+          <div class="score-circle">
+            <span class="big-num" id="result-score-screen"></span>
+            <span class="out-of">out of 100</span>
+          </div>
+          <div class="band-label" id="result-band-screen"></div>
+          <p class="band-desc" id="result-desc-screen"></p>
+        </div>
+      </div>
+
+      <div class="section-heading">Domain Breakdown</div>
+      <div id="domain-breakdown-screen"></div>
+
+      <div class="section-heading">Your Action Plan</div>
+      <p style="font-size:0.845rem;color:var(--mid);margin-bottom:18px;">Every question, your rating, and the specific next step for where you are right now.</p>
+      <div id="report-detail-screen"></div>
+
+      <div class="section-heading">Resource Toolkit</div>
+      <p class="toolkit-intro">Free, authoritative resources organized by domain. Click any card to open it — or print this report to get scannable QR codes for every link.</p>
+      <div id="toolkit-screen"></div>
+
+      <div class="section-heading">What to do with this</div>
+      <ul class="action-list">
+        <li>Download your report (use the button below) and save it.</li>
+        <li>Pick three questions where your rating is 2 or below.</li>
+        <li>Copy the "this week" advice for those three into your phone or planner.</li>
+        <li>Bring your three priorities to the Week 2 discussion.</li>
+        <li>We will re-take this survey in Week 12. Plan to be unrecognizable.</li>
+      </ul>
+      <p style="font-size:0.75rem;color:var(--light);margin-top:14px;font-style:italic;">
+        A high score does not mean you are ready. A low score does not mean you are behind. The score is a map, not a verdict.
+      </p>
+
+      <div class="results-actions">
+        <button class="btn btn-dark" onclick="window.print()">Download / Print PDF</button>
+        <button class="btn btn-secondary" onclick="restartSurvey()">Start over</button>
+      </div>
+      <p class="footer-attr">Prof. Kramer Gibson &nbsp;&middot;&nbsp; Berklee College of Music</p>
+    </div>
+
+    <!-- PRINT-ONLY: 2-page condensed version ── -->
+    <div class="print-only" id="print-section">
+      <!-- built by JS -->
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ── CONFIG ─────────────────────────────────────────────── */
+const CONFIG = {
+  gasEndpoint: '' // paste your Google Apps Script doPost URL here
+};
+
+/* ── TOOLKIT DATA (researched by Pax) ───────────────────── */
+const TOOLKIT = [
+  {
+    domain: 'A', name: 'Digital Presence and Portfolio',
+    links: [
+      { label: 'Bandzoogle',            url: 'https://bandzoogle.com/',                                      desc: 'The leading website builder made for musicians, with commission-free merch, mailing list tools, and a built-in EPK builder (30-day free trial, no credit card required).' },
+      { label: 'Sonicbids EPK',         url: 'https://www.sonicbids.com/',                                  desc: 'Industry-standard electronic press kit platform where musicians can create a free EPK, add audio, video, and photos, and share it with venues, labels, and media.' },
+      { label: 'Bandcamp',              url: 'https://bandcamp.com/',                                        desc: 'Free platform for independent musicians to upload, sell, and stream music directly to fans with no upfront cost and an artist-favorable revenue split.' },
+      { label: 'SoundCloud for Artists', url: 'https://artists.soundcloud.com/',                             desc: 'SoundCloud\'s artist dashboard for uploading and sharing music, tracking plays and audience data, and accessing distribution options.' }
+    ]
+  },
+  {
+    domain: 'B', name: 'Financial Foundation',
+    links: [
+      { label: 'Wave Accounting',       url: 'https://www.waveapps.com/',                                   desc: 'Free accounting and invoicing software for freelancers, with unlimited invoices, expense tracking, and basic financial reporting at no cost.' },
+      { label: 'IRS Self-Employed Tax Center', url: 'https://www.irs.gov/businesses/small-businesses-self-employed/self-employed-individuals-tax-center', desc: 'The IRS\'s official resource hub for self-employed individuals covering filing requirements, quarterly payments, deductions, and self-employment tax.' },
+      { label: 'IRS Form 1040-ES',      url: 'https://www.irs.gov/forms-pubs/about-form-1040-es',          desc: 'The official IRS page for Form 1040-ES, used by freelancers and self-employed musicians to calculate and submit quarterly estimated tax payments.' },
+      { label: 'Ally High-Yield Savings', url: 'https://www.ally.com/bank/online-savings-account/',        desc: 'A free online high-yield savings account with no minimum balance or monthly fees, useful for setting aside money for taxes and income fluctuations.' }
+    ]
+  },
+  {
+    domain: 'C', name: 'Career Network and Communication',
+    links: [
+      { label: 'Join ASCAP',            url: 'https://www.ascap.com/music-creators',                        desc: 'ASCAP is a performing rights organization where songwriters and composers register to collect public performance royalties when their music is played or broadcast.' },
+      { label: 'Join BMI',              url: 'https://www.bmi.com/join/',                                    desc: 'BMI is a free-to-join performing rights organization for songwriters and composers that collects and distributes public performance royalties at no cost to creators.' },
+      { label: 'SoundExchange',         url: 'https://www.soundexchange.com/register/',                     desc: 'The nonprofit that collects and distributes digital performance royalties from services like Pandora and SiriusXM, free to register and claim your recordings.' },
+      { label: 'Songtrust Split Sheet', url: 'https://www.songtrust.com/en/split-sheet-download',           desc: 'A free, downloadable split sheet template that documents each collaborator\'s songwriting ownership percentage for any co-written track.' }
+    ]
+  },
+  {
+    domain: 'D', name: 'Graduation and Life Logistics',
+    links: [
+      { label: 'HealthCare.gov',        url: 'https://www.healthcare.gov/',                                 desc: 'The federal marketplace for health insurance, where freelance musicians can compare and enroll in ACA plans, often with income-based subsidies that reduce monthly premiums.' },
+      { label: 'Young Adults and ACA',  url: 'https://www.healthcare.gov/young-adults/',                    desc: 'HealthCare.gov\'s guide to coverage options for adults under 30, including staying on a parent\'s plan, Marketplace plans, Medicaid, and catastrophic coverage.' },
+      { label: 'NerdWallet Cost-of-Living', url: 'https://www.nerdwallet.com/cost-of-living-calculator',   desc: 'A free calculator that compares housing, food, transportation, and other expenses between cities to help musicians plan a post-graduation relocation.' },
+      { label: 'Numbeo City Comparison', url: 'https://www.numbeo.com/cost-of-living/comparison.jsp',      desc: 'A crowdsourced global database that lets you compare detailed cost-of-living figures between two cities, including rent, groceries, and local prices.' }
+    ]
+  },
+  {
+    domain: 'E', name: 'Professional Habits and Resilience',
+    links: [
+      { label: 'Band Pencil Contract',  url: 'https://bandpencil.com/article/event-contract',               desc: 'A free, musician-specific live performance contract template available in Word, Pages, and PDF formats, covering booking terms, payment, and cancellation. No subscription required.' },
+      { label: 'LMM Contract Generator', url: 'https://www.lastminutemusicians.com/free-tools/contract-generator/', desc: 'A free online contract generator for musicians that creates a ready-to-use performance agreement by filling out a simple form, with no account or subscription required.' },
+      { label: 'Todoist',               url: 'https://todoist.com/',                                        desc: 'A free task management app with natural-language input, project organization, and cross-platform sync to help musicians manage their professional workload.' },
+      { label: 'CNVC / NVC',            url: 'https://www.cnvc.org/learn/what-is-nvc',                      desc: 'The Center for Nonviolent Communication\'s introduction to NVC, a framework for clear and empathetic communication that helps musicians navigate professional relationships and conflict.' }
+    ]
+  }
+];
+
+/* ── QUESTIONS ──────────────────────────────────────────── */
+const DOMAINS = [
+  { id: 'A', name: 'Digital Presence and Portfolio' },
+  { id: 'B', name: 'Financial Foundation' },
+  { id: 'C', name: 'Career Network and Communication' },
+  { id: 'D', name: 'Graduation and Life Logistics' },
+  { id: 'E', name: 'Professional Habits and Resilience' }
+];
+
+const QUESTIONS = [
+  { domain:'A', text:'Do you have a website that shows your work as a musician or music professional?',
+    feedback:{ 1:'No website yet. This week: claim a domain (yourname.com) and pick a host — Squarespace, Bandzoogle, Wix, or GitHub Pages. Spend one hour. That is enough to start.', 2:'You have thought about it. This week: write a one-page outline on paper — Home, About, Music, Contact. The outline unlocks the build.', 3:'A site exists but is outdated or thin. This week: update the About page and replace any media older than two years. Stale sites read as inactive careers.', 4:'Working site with current music and contact info. This month: add one press quote, one upcoming date, and a clear booking email. Move from "exists" to "books gigs."', 5:'Polished, current, and used by others. This month: review analytics. Where is traffic coming from? Are you converting visitors into bookings or list signups?' }},
+  { domain:'A', text:'Do you have current, quality recordings of your performance available online?',
+    feedback:{ 1:'Nothing online. This week: record one piece on your phone, mix it on free software (Reaper trial, GarageBand, BandLab), and upload it. A real recording in the world beats a perfect one in your head.', 2:'You have rough recordings but have not posted them. This week: pick one and post it. Done is better than perfect at this stage.', 3:'Some recordings online but quality is uneven. This month: identify the strongest one and pin it to the top of every profile. Visitors only watch the first thing.', 4:'A few solid recordings represent you well. This month: budget for one professionally produced track or live video before graduation.', 5:'Multiple polished recordings, regularly updated. This semester: plan your next release cadence. Audiences forget you in 90 days of silence.' }},
+  { domain:'A', text:'Do you have an active professional social media presence for your music or your craft?',
+    feedback:{ 1:'Personal accounts only, no professional brand. This week: open one professional account (Instagram or TikTok), set it to public, and write a bio with three things: what you do, where you are, how to book you.', 2:'A professional account exists but is dormant. This week: post one piece of content. A short clip, a behind-the-scenes shot, a lesson. Break the silence.', 3:'You post occasionally without a plan. This month: pick one weekly day and time to post. Consistency beats virality for working musicians.', 4:'Regular posting and a clear voice. This month: study three accounts in your niche that are larger than yours. Copy the format, not the content.', 5:'Strong, growing, on-brand presence. This semester: build a list off the platform — email, SMS, or Patreon. You do not own your followers. You own your list.' }},
+  { domain:'A', text:'Do you have a press kit or EPK (electronic press kit) ready to send when someone asks?',
+    feedback:{ 1:'Nothing assembled. This week: open a Google Doc and dump your bio, three best photos, two best recordings, and one press quote. That is a v1 EPK.', 2:'Pieces exist but not in one place. This week: combine them. A single shareable link is the entire job.', 3:'An EPK exists but is dated. This month: refresh the bio and replace the oldest two assets. Bios over a year old hurt you.', 4:'Current EPK that you have actually sent. This month: get a peer to react to it. Ask: "Would you book this person from this alone?" Adjust based on the answer.', 5:'Professional EPK landing page, regularly updated. This semester: A/B test two versions for response rates. Treat it like marketing copy.' }},
+  { domain:'B', text:'Do you have a budget for your personal expenses?',
+    feedback:{ 1:'No budget. This week: download your last 30 days of bank statements and categorize spending into Rent, Food, Transport, Subscriptions, Music, Fun. Awareness comes before control.', 2:'A rough mental budget but nothing written. This week: put the categories above into a Google Sheet with monthly totals. Twenty minutes of work.', 3:'A written budget you do not consistently follow. This week: pick one category to track daily for the rest of the month. Build the habit on one front.', 4:'A real budget you check monthly. This month: add a "future you" line — retirement, emergency fund, and a yearly gear or training expense.', 5:'Detailed budget with savings, taxes, and goals built in. This month: stress-test it. What happens if income drops 50 percent for two months?' }},
+  { domain:'B', text:'Do you have a clear plan for how much to charge clients (lessons, sessions, gigs, production work)?',
+    feedback:{ 1:'You charge whatever feels okay in the moment. This week: write down what you have charged for your last five paid gigs or lessons. Patterns will surface.', 2:'A vague range, no real logic. This week: research three peers and three pros in your city. Anchor your numbers to data, not feelings.', 3:'A baseline rate, but you discount easily. This week: write one sentence you can say out loud when someone asks for a discount.', 4:'Clear rates for your services, applied consistently. This month: identify your "premium" tier. What would you charge a client who needs it tomorrow?', 5:'Tiered pricing with terms, deposits, and a written policy. This month: review your rates against your time-per-job. You may be underselling.' }},
+  { domain:'B', text:'Do you understand the basics of self-employment taxes: quarterly estimated payments, 1099 vs W-2, what you can deduct?',
+    feedback:{ 1:'None of those terms mean anything yet. This week: read the IRS Schedule C overview (one page) and skim one YouTube video on quarterly estimated taxes.', 2:'You have heard the terms but never engaged. This week: open a separate bank account for self-employment income. Not commingling money is the single biggest tax-time win.', 3:'You file taxes but do not plan for them. This month: set up an auto-transfer of 25 to 30 percent of every gig payment into a tax savings account.', 4:'You file Schedule C and track deductions. This month: list five deductible categories you might be missing — home office, gear depreciation, mileage, professional development, software.', 5:'You work with a CPA, pay quarterly, and plan ahead. This year: ask your CPA about an S-Corp or LLC election once revenue passes a threshold.' }},
+  { domain:'B', text:'Do you have a backup income plan if music work does not cover your expenses?',
+    feedback:{ 1:'No backup. This week: list three jobs you could pick up within two weeks (food service, retail, teaching, audio rental). Knowing the option calms the fear.', 2:'You have a vague idea. This week: identify which of those three has the highest hourly rate and flexible scheduling. That is your first-call fallback.', 3:'A part-time job or hustle exists but you resent it. This week: reframe it. The backup gig is what protects your music from desperation pricing.', 4:'A diversified income mix. This month: calculate what percent of income is music vs adjacent. Most working musicians sit at 30 to 60 percent music — that is normal.', 5:'Multiple income streams, deliberately balanced. This semester: stress-test the mix. If one stream dies, can you survive 90 days?' }},
+  { domain:'C', text:'Do you have a network of mentors you can ask for advice?',
+    feedback:{ 1:'No mentors yet. This week: name three people whose careers you respect. They do not need to know you yet. The list is the first step.', 2:'One person you sometimes ask. This week: send them a specific question. Mentorship is built one ask at a time.', 3:'A few people you talk to occasionally. This month: schedule a recurring quarterly check-in with at least one of them. Predictable contact beats random contact.', 4:'Real mentor relationships across multiple domains. This month: introduce two of your mentors to each other if it makes sense.', 5:'Active mentor network and you are mentoring others. This semester: write down what you have learned in the last year that you can teach.' }},
+  { domain:'C', text:'Do you have an active peer or collaborator network — people you actually make music or business with?',
+    feedback:{ 1:'Mostly working alone. This week: text three classmates you have not collaborated with and propose one small thing: a song, a session, a co-write, a duo set.', 2:'A few collaborators but irregular. This week: schedule one collab session in the next two weeks. Specific date or it will not happen.', 3:'A working circle but mostly the same three people. This month: introduce yourself to one person outside your immediate circle. Networks calcify fast.', 4:'A wide and active collaborator network. This month: identify one collaborator who could become a business partner — shared booking, shared list, shared release.', 5:'A reliable creative ecosystem around you. This semester: document who does what. A team without role clarity dissolves when the first conflict hits.' }},
+  { domain:'C', text:'Do you have a resume tailored to the music industry roles you might apply for?',
+    feedback:{ 1:'No resume at all, or only a non-music one. This week: open the LHUM400 resume template, paste your last three roles, and stop. v1 is enough this week.', 2:'A generic resume that does not target music work. This week: rewrite the top section as a music-industry summary. The first six lines decide whether the reader keeps reading.', 3:'A music resume that is dated. This month: add or update one gig, one teaching engagement, and one technical skill. Hiring managers scan for recency.', 4:'A polished, current music resume. This month: build a second variant for a different role (teaching vs production vs admin). One resume for every job is a tell.', 5:'Multiple targeted variants, a portfolio link, and references lined up. This semester: have a peer read it cold and tell you what they think the job is.' }},
+  { domain:'C', text:'Do you understand how music rights, royalties, splits, and Performing Rights Organizations (ASCAP, BMI, SESAC) work for your own original work?',
+    feedback:{ 1:'These terms are fog. This week: pick one — ASCAP — and read its "What is a PRO?" page. One concept this week is plenty.', 2:'You know the words but not what to do. This week: if you write or co-write music, register one song with a PRO. Free for ASCAP, no excuse not to.', 3:'Registered with a PRO but you never collect mechanical or sync royalties. This month: open a free DistroKid or TuneCore Publishing account, or research SoundExchange for streaming rights.', 4:'You understand publishing splits and write split sheets before sessions. This month: audit your last three collabs. Document missing splits now while everyone still remembers.', 5:'You actively manage publishing, sync registrations, and split documentation. Research whether a publishing administration deal (Songtrust, Sentric) is worth the percentage for your catalog.' }},
+  { domain:'D', text:'Do you have a clear plan to complete the requirements to graduate from Berklee?',
+    feedback:{ 1:'You are not sure what is left. This week: book a meeting with your academic advisor. The conversation is short. The relief is huge.', 2:'You have a vague sense of remaining credits. This week: pull up your DegreeWorks audit and list every remaining requirement on one page. See the whole thing.', 3:'You know what is left, but the path has scheduling risk. This month: map the next two semesters\' required courses against when each is offered. Some run once a year.', 4:'Clear graduation roadmap, on track. This month: identify one elective that doubles as career investment — a business, tech, or arranging course. Use elective slots strategically.', 5:'On track with a capstone strategy in place. This semester: plan your senior recital or capstone as a portfolio asset. Future you will use the footage for years.' }},
+  { domain:'D', text:'Do you have an idea of where you want to live after Berklee, and have you started planning for that move?',
+    feedback:{ 1:'No idea at all. This week: list three cities and one criterion you care about for each (cost of living, music scene, family, climate). Constraints make decisions possible.', 2:'A city in mind but no research. This week: look up rent prices in two neighborhoods and one music venue you would want to play. Make the city real, not theoretical.', 3:'A target city, vague plan. This month: identify one contact (alumni, family, friend) already in that city. The first contact is the hardest. After that, everything compounds.', 4:'Target city, contacts, rough timeline. This month: visit if possible. One weekend in the city reveals more than a year of online research.', 5:'City chosen, contacts in place, housing leads, financial cushion mapped. This semester: build a 90-day post-move plan. Inertia is the enemy of the move.' }},
+  { domain:'D', text:'Do you have a plan for health insurance after you leave your parents\' plan or Berklee\'s?',
+    feedback:{ 1:'No idea what happens. This week: confirm when your current coverage ends. The date drives every other decision.', 2:'You know it ends but not what comes next. This week: visit healthcare.gov and check your state\'s marketplace open enrollment dates.', 3:'You know the options but have not chosen. This month: compare three plans by total cost (premium + deductible + typical use), not premium alone.', 4:'Plan chosen or selected through work. This month: confirm your prescriptions, doctors, and any specialist visits are in-network. Switching mid-year is expensive.', 5:'Full coverage including dental, vision, and a planned HSA or FSA. This year: max your HSA contribution if eligible. It is the most tax-advantaged account that exists.' }},
+  { domain:'D', text:'Do you have an emergency fund (3 months of basic living expenses) saved?',
+    feedback:{ 1:'No savings, often overdrafting. This week: open a separate high-yield savings account (Ally, Marcus, Wealthfront). The friction of transferring out is the feature.', 2:'Some savings, less than one month. This week: set up a small recurring auto-transfer — even $25 a week. Habit, not amount, is the work right now.', 3:'1 to 2 months saved. This month: increase the auto-transfer by 25 percent. Most musicians stall here because the goal feels far. Bridge it incrementally.', 4:'3 months saved. This month: do not touch it. Decide what counts as an "emergency" in writing now — car repair yes, new pedal no.', 5:'3 to 6 months saved, separate account, untouched. This year: start an investment account for anything past 6 months. Cash beyond your emergency fund loses to inflation.' }},
+  { domain:'E', text:'Do you have a weekly schedule or time management system you actually use?',
+    feedback:{ 1:'No system — days happen to you. This week: pick one tool (paper planner, Google Calendar, Notion, a notebook). Just one. Tool-shopping is procrastination.', 2:'You use a calendar but not consistently. This week: block one recurring practice or work session and protect it for two weeks. Build evidence that the system works.', 3:'Calendar use is patchy. This month: do a weekly review every Sunday for the next four Sundays. 15 minutes. Look back, look forward.', 4:'Reliable weekly system. This month: add a quarterly review to your calendar. Weekly maintains, quarterly redirects.', 5:'Weekly and quarterly system, plus you track time against priorities. This semester: audit one week\'s actual time use. Most musicians find a 30 to 50 percent gap. That is the work.' }},
+  { domain:'E', text:'Do you have a written agreement or contract template for gigs, lessons, or sessions?',
+    feedback:{ 1:'No contracts, all handshake. This week: write a one-paragraph email template covering rate, date, time, location, and cancellation policy. That is your v1 contract.', 2:'You use email confirmations but no formal terms. This week: add a deposit clause and a cancellation policy. Two sentences. They prevent a lot of pain.', 3:'A basic contract for some work but not all. This month: pick the highest-risk category (weddings, corporate gigs, long-term clients) and use a real contract there.', 4:'Solid contract templates for different job types. This month: have someone with legal experience read your most-used template. Free 30-minute consults exist.', 5:'Multiple templates, legal review, electronic signature workflow. This semester: review your last 6 months of jobs. Update templates from real cases, not from imagination.' }},
+  { domain:'E', text:'Do you have a clear plan to keep developing as a musician and as a professional after Berklee?',
+    feedback:{ 1:'No plan — "keep playing" is not a plan. This week: name one specific skill you want to develop in the next 12 months. Specificity is the whole game.', 2:'A vague desire to keep improving. This week: pick one teacher, one book, or one course tied to that skill. Resource locked = path opened.', 3:'Some learning happening, unstructured. This month: design a 90-day learning plan with weekly time blocks and one mid-point check-in. Treat it like a course you registered for.', 4:'Active, structured continuing education. This month: budget for one professional development expense in the next 12 months — a workshop, a lesson series, a conference.', 5:'Ongoing structured growth, networked into a learning community. This year: pick a stretch goal that scares you. Skill plateaus need shock-loading.' }},
+  { domain:'E', text:'Do you have a strategy for setting boundaries and resolving conflict with clients, bandmates, and collaborators?',
+    feedback:{ 1:'You avoid conflict, which usually makes it worse. This week: identify one current low-stakes conflict you have been avoiding. Plan one sentence you will say this week.', 2:'You handle conflict reactively, often poorly. This week: read one short article on "I-statements" and "Nonviolent Communication." Vocabulary first, practice second.', 3:'You can have hard conversations but they cost you. This month: notice your default response under stress (people-please, withdraw, fight). Naming your pattern reduces its grip.', 4:'Reliable communication under pressure. This month: review one past conflict that resolved well and one that did not. The pattern is more useful than the incidents.', 5:'You set expectations early, address problems quickly, and recover relationships. This semester: mentor a peer through one of their conflicts. Teaching the skill is how you keep it.' }}
+];
+
+const CANNED = {
+  1: "Noted. Starting from zero is the most honest place to begin — and exactly what this course is designed for.",
+  2: "That's a fair read. The gap between thinking and acting is real, and naming it is already useful.",
+  3: "You've got something in motion. Partial counts — this is a foundation to build from.",
+  4: "Solid. That's a real working foundation. The goal from here is to sharpen and stress-test it.",
+  5: "That's a genuine asset. The question now is how actively you're using it."
+};
+
+const SCORE_BANDS = [
+  { min:80, max:100, label:'Launch-ready',      desc:'You have built real infrastructure. Use this course to sharpen and stress-test it.' },
+  { min:60, max:79,  label:'Building momentum', desc:'Many pieces are in motion. Use this course to close the highest-impact gaps.' },
+  { min:40, max:59,  label:'Foundational gaps', desc:'Several major domains are unbuilt. Use this course to pick two and make real progress.' },
+  { min:20, max:39,  label:'Early stage',        desc:'This is normal for many students. The course exists precisely for this. Pick one domain and start.' },
+  { min:0,  max:19,  label:'Start here',         desc:'You have time. Pick the single highest-fear question and act on it this week. Everything else follows.' }
+];
+
+const DOMAIN_BANDS = [
+  { min:16, max:20, label:'Strong', cls:'chip-strong' },
+  { min:12, max:15, label:'Solid',  cls:'chip-solid' },
+  { min:8,  max:11, label:'Patchy', cls:'chip-patchy' },
+  { min:4,  max:7,  label:'Bare',   cls:'chip-bare' }
+];
+
+/* ── STATE ──────────────────────────────────────────────── */
+let currentQ = 0;
+let answers  = new Array(QUESTIONS.length).fill(null);
+let studentName = '', studentEmail = '';
+
+/* ── SCREENS ────────────────────────────────────────────── */
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ── START ──────────────────────────────────────────────── */
+function startSurvey() {
+  studentName  = document.getElementById('student-name').value.trim() || 'Student';
+  studentEmail = document.getElementById('student-email').value.trim();
+  currentQ = 0;
+  answers  = new Array(QUESTIONS.length).fill(null);
+  renderQuestion();
+  showScreen('screen-question');
+}
+
+/* ── QUESTION ───────────────────────────────────────────── */
+function renderQuestion() {
+  const q   = QUESTIONS[currentQ];
+  const dom = DOMAINS.find(d => d.id === q.domain);
+  document.getElementById('progress-bar').style.width = (currentQ / QUESTIONS.length * 100) + '%';
+  document.getElementById('domain-label').textContent = 'Domain ' + q.domain + ': ' + dom.name;
+  document.getElementById('q-counter').textContent    = 'Question ' + (currentQ+1) + ' of ' + QUESTIONS.length;
+  document.getElementById('q-text').textContent       = (currentQ+1) + '. ' + q.text;
+
+  const lbls = ['','Not started','Thought about it','Started, partial','Working version','Polished & public'];
+  const grid = document.getElementById('rating-grid');
+  grid.innerHTML = '';
+  for (let r = 1; r <= 5; r++) {
+    const btn = document.createElement('button');
+    btn.className = 'rating-btn' + (answers[currentQ] === r ? ' selected' : '');
+    btn.innerHTML = '<span class="num">' + r + '</span><span class="lbl">' + lbls[r] + '</span>';
+    btn.onclick = () => selectRating(r);
+    grid.appendChild(btn);
+  }
+
+  const canned = document.getElementById('canned-response');
+  if (answers[currentQ] !== null) {
+    canned.textContent = CANNED[answers[currentQ]];
+    canned.classList.add('visible');
+  } else {
+    canned.textContent = '';
+    canned.classList.remove('visible');
+  }
+
+  document.getElementById('btn-next').disabled = answers[currentQ] === null;
+  document.getElementById('btn-back').style.display = currentQ === 0 ? 'none' : '';
+  document.getElementById('btn-next').textContent = currentQ === QUESTIONS.length-1 ? 'See my results' : 'Next →';
+}
+
+function selectRating(r) {
+  answers[currentQ] = r;
+  document.querySelectorAll('.rating-btn').forEach((b,i) => b.classList.toggle('selected', i+1===r));
+  const canned = document.getElementById('canned-response');
+  canned.textContent = CANNED[r];
+  canned.classList.add('visible');
+  document.getElementById('btn-next').disabled = false;
+}
+
+function nextQuestion() {
+  if (answers[currentQ] === null) return;
+  if (currentQ < QUESTIONS.length-1) { currentQ++; renderQuestion(); window.scrollTo(0,0); }
+  else showResults();
+}
+
+function prevQuestion() {
+  if (currentQ > 0) { currentQ--; renderQuestion(); window.scrollTo(0,0); }
+  else showScreen('screen-intro');
+}
+
+/* ── RESULTS ────────────────────────────────────────────── */
+function showResults() {
+  document.getElementById('progress-bar').style.width = '100%';
+  const total = answers.reduce((s,v) => s+v, 0);
+  const band  = SCORE_BANDS.find(b => total >= b.min && total <= b.max);
+  const date  = new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'});
+
+  // Domain scores
+  const domScores = DOMAINS.map(dom => {
+    const idxs = QUESTIONS.map((q,i) => q.domain===dom.id ? i : -1).filter(i=>i>=0);
+    return idxs.reduce((s,i) => s+answers[i], 0);
+  });
+
+  buildScreenResults(total, band, domScores, date);
+  buildPrintSection(total, band, domScores, date);
+  buildScreenToolkit();
+
+  showScreen('screen-results');
+  window.scrollTo(0,0);
+  setTimeout(() => generateQRCodes(), 100);
+  postToSheets(total, domScores);
+}
+
+/* ── SCREEN RESULTS ─────────────────────────────────────── */
+function buildScreenResults(total, band, domScores, date) {
+  document.getElementById('result-meta-screen').textContent = studentName + (studentEmail ? '  ·  ' + studentEmail : '') + '  ·  ' + date;
+  document.getElementById('result-score-screen').textContent = total;
+  document.getElementById('result-band-screen').textContent  = band.label;
+  document.getElementById('result-desc-screen').textContent  = band.desc;
+
+  // Domain breakdown
+  const dEl = document.getElementById('domain-breakdown-screen');
+  dEl.innerHTML = '';
+  DOMAINS.forEach((dom, i) => {
+    const score = domScores[i];
+    const db    = DOMAIN_BANDS.find(b => score >= b.min && score <= b.max);
+    const pct   = ((score-4)/16*100).toFixed(1);
+    dEl.innerHTML += `
+      <div class="domain-row">
+        <div class="domain-row-name">Domain ${dom.id}: ${dom.name}</div>
+        <div class="domain-bar-wrap"><div class="domain-bar" style="width:${pct}%"></div></div>
+        <div class="domain-score-text">${score}/20</div>
+        <div class="domain-band-chip ${db.cls}">${db.label}</div>
+      </div>`;
+  });
+
+  // Full report
+  const rEl = document.getElementById('report-detail-screen');
+  rEl.innerHTML = '';
+  DOMAINS.forEach(dom => {
+    const qs = QUESTIONS.map((q,i)=>({...q,idx:i})).filter(q=>q.domain===dom.id);
+    let cards = qs.map(q => `
+      <div class="report-q-card">
+        <div class="report-q-top">
+          <div class="report-q-rating">${answers[q.idx]}</div>
+          <div class="report-q-text">${q.idx+1}. ${q.text}</div>
+        </div>
+        <div class="report-q-advice">${q.feedback[answers[q.idx]]}</div>
+      </div>`).join('');
+    rEl.innerHTML += `
+      <div class="report-domain-block">
+        <div class="report-domain-title">Domain ${dom.id}: ${dom.name}</div>
+        ${cards}
+      </div>`;
+  });
+}
+
+/* ── SCREEN TOOLKIT ─────────────────────────────────────── */
+function buildScreenToolkit() {
+  const el = document.getElementById('toolkit-screen');
+  el.innerHTML = '';
+  TOOLKIT.forEach(dom => {
+    const cards = dom.links.map(link => {
+      const short = link.url.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'').split('/')[0];
+      return `
+        <a class="toolkit-card" href="${link.url}" target="_blank" rel="noopener">
+          <div class="toolkit-card-label">${link.label}</div>
+          <div class="toolkit-card-desc">${link.desc}</div>
+          <div class="toolkit-card-url">${short}</div>
+        </a>`;
+    }).join('');
+    el.innerHTML += `
+      <div class="toolkit-domain">
+        <div class="toolkit-domain-title">Domain ${dom.domain}: ${dom.name}</div>
+        <div class="toolkit-grid">${cards}</div>
+      </div>`;
+  });
+}
+
+/* ── PRINT SECTION ──────────────────────────────────────── */
+function buildPrintSection(total, band, domScores, date) {
+  const printEl = document.getElementById('print-section');
+  printEl.innerHTML = '';
+
+  // ── PAGE 1 ──
+  const pg1 = document.createElement('div');
+  pg1.className = 'print-pg1';
+
+  // Header
+  const metaLine = studentName + (studentEmail ? '  ·  ' + studentEmail : '') + '  ·  ' + date;
+  let html = `<div class="p1-header"><h2>Real-World Readiness Audit</h2><p>${metaLine}</p></div>`;
+
+  // Score + Domain side by side
+  const bandObj = DOMAIN_BANDS; // reuse
+  let domRows = DOMAINS.map((dom, i) => {
+    const score = domScores[i];
+    const db    = DOMAIN_BANDS.find(b => score >= b.min && score <= b.max);
+    const pct   = ((score-4)/16*100).toFixed(1);
+    return `
+      <div class="p1-domain-row">
+        <div class="p1-domain-name">Domain ${dom.id}: ${dom.name}</div>
+        <div class="p1-bar-wrap"><div class="p1-bar" style="width:${pct}%"></div></div>
+        <div class="p1-score-txt">${score}/20</div>
+        <div class="p1-chip ${db.cls}">${db.label}</div>
+      </div>`;
+  }).join('');
+
+  html += `
+    <div class="p1-top">
+      <div class="p1-score-col">
+        <div class="p1-score-circle">
+          <span class="snum">${total}</span>
+          <span class="sof">out of 100</span>
+        </div>
+        <div class="p1-band-label">${band.label}</div>
+        <div class="p1-band-desc">${band.desc}</div>
+      </div>
+      <div class="p1-domain-col">
+        <div class="p1-domain-heading">Domain Breakdown</div>
+        ${domRows}
+      </div>
+    </div>`;
+
+  // Priority items: rated 1 or 2, or lowest 3 if all >= 3, max 6
+  let priorities = answers.map((r,i)=>({idx:i,rating:r})).filter(x=>x.rating<=2).sort((a,b)=>a.rating-b.rating);
+  if (priorities.length < 3) {
+    const rest = answers.map((r,i)=>({idx:i,rating:r})).filter(x=>x.rating>2).sort((a,b)=>a.rating-b.rating);
+    priorities = [...priorities, ...rest].slice(0,3);
+  }
+  priorities = priorities.slice(0, 6);
+
+  const hasPriorities = priorities.length > 0;
+  const priorityLabel = answers.some(r => r <= 2) ? 'Priority Action Items (rated 1–2)' : 'Your Lowest-Scored Items';
+
+  html += `<div class="p1-priority-heading">${priorityLabel}</div>`;
+  html += priorities.map(p => {
+    const q = QUESTIONS[p.idx];
+    return `
+      <div class="p1-item">
+        <div class="p1-item-num">${p.rating}</div>
+        <div class="p1-item-body">
+          <div class="p1-item-q">${p.idx+1}. ${q.text}</div>
+          <div class="p1-item-advice">${q.feedback[p.rating]}</div>
+        </div>
+      </div>`;
+  }).join('');
+
+  html += `<div class="p1-footer">A high score does not mean you are ready. A low score does not mean you are behind. The score is a map, not a verdict. &nbsp;&nbsp; Prof. Kramer Gibson · Berklee College of Music</div>`;
+
+  pg1.innerHTML = html;
+  printEl.appendChild(pg1);
+
+  // ── PAGE 2 ──
+  const pg2 = document.createElement('div');
+  pg2.className = 'print-pg2 print-page-break';
+
+  let html2 = `
+    <div class="p2-header">
+      <h2>Your Resource Toolkit</h2>
+      <p>Free, authoritative resources for every domain. Scan the QR code or type the URL.</p>
+    </div>`;
+
+  TOOLKIT.forEach(dom => {
+    const items = dom.links.map((link, li) => {
+      const short = link.url.replace(/^https?:\/\/(www\.)?/,'').replace(/\/$/,'').split('/')[0];
+      const qrId  = `qr-${dom.domain.toLowerCase()}-${li}`;
+      return `
+        <div class="p2-item">
+          <div class="p2-qr" id="${qrId}"></div>
+          <div class="p2-text">
+            <div class="p2-label">${link.label}</div>
+            <div class="p2-desc">${link.desc}</div>
+            <div class="p2-url">${link.url}</div>
+          </div>
+        </div>`;
+    }).join('');
+
+    html2 += `
+      <div class="p2-domain">
+        <div class="p2-domain-title">Domain ${dom.domain}: ${dom.name}</div>
+        <div class="p2-grid">${items}</div>
+      </div>`;
+  });
+
+  html2 += `<div class="p2-footer">Prof. Kramer Gibson &nbsp;·&nbsp; Berklee College of Music &nbsp;·&nbsp; LHUM400 Summer 2026</div>`;
+
+  pg2.innerHTML = html2;
+  printEl.appendChild(pg2);
+}
+
+/* ── QR CODES ───────────────────────────────────────────── */
+function generateQRCodes() {
+  TOOLKIT.forEach(dom => {
+    dom.links.forEach((link, li) => {
+      const id = `qr-${dom.domain.toLowerCase()}-${li}`;
+      const el = document.getElementById(id);
+      if (!el || el.children.length > 0) return;
+      if (typeof QRCode === 'undefined') {
+        el.innerHTML = `<div class="p2-qr-fallback">Visit:<br>${link.url.replace(/^https?:\/\/(www\.)?/,'').split('/')[0]}</div>`;
+        return;
+      }
+      new QRCode(el, { text: link.url, width: 90, height: 90, colorDark: '#1c2b4a', colorLight: '#ffffff', correctLevel: QRCode.CorrectLevel.M });
+    });
+  });
+}
+
+/* ── RESTART ────────────────────────────────────────────── */
+function restartSurvey() {
+  currentQ = 0;
+  answers  = new Array(QUESTIONS.length).fill(null);
+  document.getElementById('progress-bar').style.width = '0%';
+  showScreen('screen-intro');
+  window.scrollTo(0,0);
+}
+
+/* ── SHEETS POST ────────────────────────────────────────── */
+function postToSheets(total, domScores) {
+  if (!CONFIG.gasEndpoint) return;
+  const payload = {
+    timestamp: new Date().toISOString(),
+    studentName, studentEmail, totalScore: total,
+    domainA: domScores[0], domainB: domScores[1], domainC: domScores[2],
+    domainD: domScores[3], domainE: domScores[4]
+  };
+  QUESTIONS.forEach((_, i) => payload['q'+(i+1)] = answers[i]);
+  fetch(CONFIG.gasEndpoint, { method:'POST', mode:'no-cors', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }).catch(()=>{});
+}
+</script>
+</body>
+</html>
