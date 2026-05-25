@@ -58,6 +58,19 @@
     .tool-title { font-size: 1.1rem; font-weight: 600; color: var(--accent); }
     .tool-desc { font-size: 0.9rem; color: var(--mid); margin-top: 4px; }
 
+    .hero-video {
+      width: 100%;
+      background: #000;
+      display: block;
+    }
+    .hero-video video {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-height: 60vh;
+      object-fit: cover;
+    }
+
     footer {
       text-align: center;
       color: var(--light);
@@ -72,6 +85,10 @@
     <h1>LHUM400 Student Tools</h1>
     <span>Berklee College of Music</span>
   </header>
+
+  <div class="hero-video">
+    <video src="lhum400-logo.mp4" autoplay loop muted playsinline preload="auto"></video>
+  </div>
 
   <main class="container">
     <h2 class="hub-title">Course Tools</h2>
