@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Resume Rubric</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .student-input-container {
+            margin-bottom: 15px;
+        }
+
+        #studentName {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            text-align: center;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            table-layout: fixed;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            vertical-align: top;
+        }
+
+        th {
+            background-color: #34495e;
+            color: white;
+            text-align: center;
+            padding: 12px;
+        }
+
+        th.criterion-col {
+            width: 150px;
+            background-color: #2c3e50;
+        }
+
+        .level-header {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        /* Row Styles */
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        td.criterion {
+            font-weight: bold;
+            background-color: #ecf0f1;
+            vertical-align: middle;
+            text-align: center;
+            font-size: 1.1em;
+        }
+
+        /* Cell Interactive Styles */
+        td.clickable {
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        td.clickable:hover {
+            background-color: #eef7fb;
+        }
+
+        /* Selection Styles */
+        td.selected {
+            background-color: #e8f6ff;
+            border: 2px solid #3498db;
+            box-shadow: inset 0 0 5px rgba(52, 152, 219, 0.2);
+        }
+
+        td.selected.excellent {
+            background-color: #d5f4e6;
+            border-color: #27ae60;
+        }
+
+        td.selected.developing {
+            background-color: #fff3cd;
+            border-color: #f39c12;
+        }
+
+        td.selected.needs-work {
+            background-color: #f8d7da;
+            border-color: #e74c3c;
+        }
+
+        /* Content Styles */
+        .cell-content {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .main-description {
+            font-weight: 500;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .checkpoint-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .checkpoint-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.95em;
+            padding: 4px;
+            border-radius: 4px;
+            transition: background-color 0.1s;
+        }
+
+        .checkpoint-item:hover {
+            background-color: rgba(0, 0, 0, 0.03);
+        }
+
+        .checkpoint-item input[type="checkbox"] {
+            margin-top: 4px;
+            cursor: pointer;
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+
+        .checkpoint-item label {
+            cursor: pointer;
+            line-height: 1.3;
+            color: #555;
+        }
+
+        /* PDF Styles for Export */
+        @media print {
+            body {
+                background-color: white;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+
+        /* Footer Buttons */
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 30px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: 500;
+        }
+
+        .btn-clear {
+            background-color: #95a5a6;
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background-color: #7f8c8d;
+        }
+
+        .btn-export {
+            background-color: #3498db;
+            color: white;
+        }
+
+        .btn-export:hover {
+            background-color: #2980b9;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container" id="rubricContainer">
+        <header>
+            <h1>Resume Evaluation Rubric</h1>
+            <div class="student-input-container">
+                <input type="text" id="studentName" placeholder="Student Name" aria-label="Student Name">
+            </div>
+        </header>
+
+        <table id="rubricTable">
+            <thead>
+                <tr>
+                    <th class="criterion-col">Criterion</th>
+                    <th>
+                        <div class="level-header">Excellent</div>
+                    </th>
+                    <th>
+                        <div class="level-header">Developing</div>
+                    </th>
+                    <th>
+                        <div class="level-header">Needs Work</div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Category 1: Formatting & Visual Design -->
+                <tr data-category="Formatting & Visual Design">
+                    <td class="criterion">Formatting & Visual Design</td>
+                    <!-- Excellent -->
+                    <td class="clickable excellent">
+                        <div class="cell-content">
+                            <div class="main-description">Makes a strong first impression through clean, professional
+                                presentation.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c1_e_1">
+                                    <label for="c1_e_1"><strong>Readability & Length:</strong> Uncluttered, max 2 pages.
+                                        White space used effectively.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c1_e_2">
+                                    <label for="c1_e_2"><strong>Font & Bold Usage:</strong> Single professional font.
+                                        Bold used consistently for headers/keys.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c1_e_3">
+                                    <label for="c1_e_3"><strong>Layout Efficiency:</strong> Full page use, no decorative
+                                        templates/sidebars/photos.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                    <!-- Developing -->
+                    <td class="clickable developing">
+                        <div class="cell-content">
+                            <div class="main-description">Mostly readable but has inconsistencies that distract from
+                                overall presentation.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c1_d_1">
+                                    <label for="c1_d_1"><strong>Readability & Length:</strong> Close to appropriate
+                                        length but slightly crowded or uneven white space.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c1_d_2">
+                                    <label for="c1_d_2"><strong>Font & Bold Usage:</strong> Mostly consistent, but bold
+                                        unevenly applied (overused or missing).</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c1_d_3">
+                                    <label for="c1_d_3"><strong>Layout Efficiency:</strong> Generally works but may
+                                        include sidebar or decorative elements reducing space.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                    <!-- Needs Work -->
+                    <td class="clickable needs-work">
+                        <div class="cell-content">
+                            <div class="main-description">Formatting makes the document difficult to read or leaves a
+                                poor first impression.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c1_n_1">
+                                    <label for="c1_n_1"><strong>Readability & Length:</strong> Exceeds 2 pages,
+                                        cluttered, or visually confusing.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c1_n_2">
+                                    <label for="c1_n_2"><strong>Font & Bold Usage:</strong> Multiple fonts,
+                                        missing/random bolding that fails to guide reader.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c1_n_3">
+                                    <label for="c1_n_3"><strong>Layout Efficiency:</strong> Layout interferes with
+                                        content (e.g., inefficient sidebars).</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Category 2: Structure & Sections -->
+                <tr data-category="Structure & Sections">
+                    <td class="criterion">Structure & Sections</td>
+                    <!-- Excellent -->
+                    <td class="clickable excellent">
+                        <div class="cell-content">
+                            <div class="main-description">Logically organized with all required sections clearly present
+                                and easy to locate.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c2_e_1">
+                                    <label for="c2_e_1"><strong>Contact & Name:</strong> Top placement, name slightly
+                                        distinct, efficient spacing.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c2_e_2">
+                                    <label for="c2_e_2"><strong>Required Sections:</strong> Contact, Education,
+                                        Experience clearly labeled and findable.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c2_e_3">
+                                    <label for="c2_e_3"><strong>Optional Sections:</strong> Skills/Statement included
+                                        only if they strengthen resume.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                    <!-- Developing -->
+                    <td class="clickable developing">
+                        <div class="cell-content">
+                            <div class="main-description">Most required sections are present but organization or
+                                placement could be improved.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c2_d_1">
+                                    <label for="c2_d_1"><strong>Contact & Name:</strong> Present but not at top, or name
+                                        not visually distinct.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c2_d_2">
+                                    <label for="c2_d_2"><strong>Required Sections:</strong> Most included, but one
+                                        missing, mislabeled, or hard to find.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c2_d_3">
+                                    <label for="c2_d_3"><strong>Optional Sections:</strong> Included but underdeveloped
+                                        or fill space without value.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                    <!-- Needs Work -->
+                    <td class="clickable needs-work">
+                        <div class="cell-content">
+                            <div class="main-description">Lacks clear organization and is missing one or more required
+                                sections.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c2_n_1">
+                                    <label for="c2_n_1"><strong>Contact & Name:</strong> Buried, incomplete, or missing.
+                                        Name doesn't stand out.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c2_n_2">
+                                    <label for="c2_n_2"><strong>Required Sections:</strong> Core sections absent or
+                                        poorly labeled.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c2_n_3">
+                                    <label for="c2_n_3"><strong>Optional Sections:</strong> Missing, or distract by
+                                        filling space without value.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Category 3: Content & Descriptions -->
+                <tr data-category="Content & Descriptions">
+                    <td class="criterion">Content & Descriptions</td>
+                    <!-- Excellent -->
+                    <td class="clickable excellent">
+                        <div class="cell-content">
+                            <div class="main-description">Descriptions are specific, professional, and paint a full
+                                picture of abilities.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c3_e_1">
+                                    <label for="c3_e_1"><strong>Specific Language:</strong> Detailed descriptions of
+                                        contributions. No vague/generic phrasing.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c3_e_2">
+                                    <label for="c3_e_2"><strong>Skills Described:</strong> Full sentences showing
+                                        competence, not just keywords.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c3_e_3">
+                                    <label for="c3_e_3"><strong>Soft Skills & Framing:</strong> Positive framing
+                                        reflecting reliability, initiative, etc.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                    <!-- Developing -->
+                    <td class="clickable developing">
+                        <div class="cell-content">
+                            <div class="main-description">Some descriptions show effort but rely too heavily on generic
+                                language or bare lists.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c3_d_1">
+                                    <label for="c3_d_1"><strong>Specific Language:</strong> Mixed quality; some
+                                        descriptive, others vague/minimal.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c3_d_2">
+                                    <label for="c3_d_2"><strong>Skills Described:</strong> Mix of sentences and bare
+                                        keywords, or underdeveloped.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c3_d_3">
+                                    <label for="c3_d_3"><strong>Soft Skills & Framing:</strong> Some positive framing,
+                                        others read as flat job descriptions.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                    <!-- Needs Work -->
+                    <td class="clickable needs-work">
+                        <div class="cell-content">
+                            <div class="main-description">Descriptions are minimal, generic, or consist largely of
+                                lists.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c3_n_1">
+                                    <label for="c3_n_1"><strong>Specific Language:</strong> Brief, generic phrases.
+                                        Little sense of actual contribution.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c3_n_2">
+                                    <label for="c3_n_2"><strong>Skills Described:</strong> Bare keyword lists only. No
+                                        context on ability level.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c3_n_3">
+                                    <label for="c3_n_3"><strong>Soft Skills & Framing:</strong> Flat lists of duties. No
+                                        positive framing/soft skills.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+
+                <!-- Category 4: Consistency & Conventions -->
+                <tr data-category="Consistency & Conventions">
+                    <td class="criterion">Consistency & Conventions</td>
+                    <!-- Excellent -->
+                    <td class="clickable excellent">
+                        <div class="cell-content">
+                            <div class="main-description">Follows professional conventions precisely and consistently
+                                throughout.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c4_e_1">
+                                    <label for="c4_e_1"><strong>Rev. Chronological:</strong> All Education/Experience
+                                        entries strictest reverse order.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c4_e_2">
+                                    <label for="c4_e_2"><strong>Verb Tense:</strong> Consistent tense (all past or
+                                        present) with no mixing.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c4_e_3">
+                                    <label for="c4_e_3"><strong>Spelling & Grammar:</strong> Zero errors. Polished and
+                                        professional.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                    <!-- Developing -->
+                    <td class="clickable developing">
+                        <div class="cell-content">
+                            <div class="main-description">Mostly follows conventions but has noticeable inconsistencies
+                                in one or more areas.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c4_d_1">
+                                    <label for="c4_d_1"><strong>Rev. Chronological:</strong> Mostly correct, but one or
+                                        more legacy sections deviate.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c4_d_2">
+                                    <label for="c4_d_2"><strong>Verb Tense:</strong> Mostly consistent but shifts
+                                        between past/present occasionally.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c4_d_3">
+                                    <label for="c4_d_3"><strong>Spelling & Grammar:</strong> One or two minor errors
+                                        affecting professionalism.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                    <!-- Needs Work -->
+                    <td class="clickable needs-work">
+                        <div class="cell-content">
+                            <div class="main-description">Does not follow professional conventions, making the resume
+                                harder to read/credible.</div>
+                            <ul class="checkpoint-list">
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c4_n_1">
+                                    <label for="c4_n_1"><strong>Rev. Chronological:</strong> Entries out of order or
+                                        random.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c4_n_2">
+                                    <label for="c4_n_2"><strong>Verb Tense:</strong> Shifts frequently with no clear
+                                        approach.</label>
+                                </li>
+                                <li class="checkpoint-item">
+                                    <input type="checkbox" id="c4_n_3">
+                                    <label for="c4_n_3"><strong>Spelling & Grammar:</strong> Multiple errors undermining
+                                        credibility.</label>
+                                </li>
+                            </ul>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Feedback Summary Removed -->
+
+        <div class="controls no-print">
+            <button class="btn-clear" onclick="clearAll()">Clear All</button>
+            <button class="btn-export" onclick="downloadPDF()">Download as PDF</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const table = document.getElementById('rubricTable');
+
+            // Handle Cell Clicks
+            table.addEventListener('click', (e) => {
+                // If clicking a checkbox or label, do NOTHING related to cell selection
+                // Just let the default checkbox behavior happen
+                if (e.target.type === 'checkbox' || e.target.tagName === 'LABEL') {
+                    return;
+                }
+
+                // If clicking elsewhere in the cell, toggle selection
+                const cell = e.target.closest('td.clickable');
+                if (cell) {
+                    if (cell.classList.contains('selected')) {
+                        cell.classList.remove('selected');
+                    } else {
+                        selectCell(cell);
+                    }
+                }
+            });
+
+            function selectCell(cell) {
+                const row = cell.parentElement;
+
+                // Deselect other cells in this row
+                row.querySelectorAll('td.clickable').forEach(c => c.classList.remove('selected'));
+
+                // Select clicked cell
+                cell.classList.add('selected');
+            }
+
+            window.clearAll = function () {
+                // Deselect cells
+                document.querySelectorAll('td.selected').forEach(cell => cell.classList.remove('selected'));
+
+                // Uncheck boxes
+                document.querySelectorAll('input[type="checkbox"]').forEach(box => box.checked = false);
+
+                // Reset inputs
+                document.getElementById('studentName').value = '';
+            };
+
+            window.downloadPDF = async function () {
+                const { jsPDF } = window.jspdf;
+                const studentNameInput = document.getElementById('studentName');
+                const studentName = studentNameInput.value.trim() || 'Student';
+                const element = document.getElementById('rubricContainer');
+                const noPrintElements = document.querySelectorAll('.no-print');
+
+                // Temporarily hide controls
+                noPrintElements.forEach(el => el.style.display = 'none');
+
+                try {
+                    const canvas = await html2canvas(element, {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff'
+                    });
+
+                    const imgData = canvas.toDataURL('image/png');
+                    const pdf = new jsPDF('p', 'mm', 'a4');
+                    const pdfWidth = pdf.internal.pageSize.getWidth();
+                    const pdfHeight = pdf.internal.pageSize.getHeight();
+                    const imgWidth = pdfWidth;
+                    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+                    // Handle multi-page if height exceeds A4 (simplified for this context)
+                    if (imgHeight > pdfHeight) {
+                        let heightLeft = imgHeight;
+                        let position = 0;
+
+                        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                        heightLeft -= pdfHeight;
+
+                        while (heightLeft >= 0) {
+                            position = heightLeft - imgHeight;
+                            pdf.addPage();
+                            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+                            heightLeft -= pdfHeight;
+                        }
+                    } else {
+                        pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+                    }
+
+                    const safeName = studentName.replace(/[^a-z0-9]/gi, '_');
+                    pdf.save(`${safeName}_Rubric.pdf`);
+
+                } catch (err) {
+                    console.error('PDF Export Error:', err);
+                    alert('Failed to generate PDF');
+                } finally {
+                    // Restore controls
+                    noPrintElements.forEach(el => el.style.display = '');
+                }
+            };
+        });
+    </script>
+</body>
+
+</html>
