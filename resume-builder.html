@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Builder</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+        :root {
+            --primary: #4F46E5;
+            /* Indigo 600 */
+            --primary-hover: #4338CA;
+            /* Indigo 700 */
+            --bg-color: #F3F4F6;
+            /* Gray 100 */
+            --card-bg: #FFFFFF;
+            --text-main: #111827;
+            /* Gray 900 */
+            --text-muted: #6B7280;
+            /* Gray 500 */
+            --border-color: #E5E7EB;
+            /* Gray 200 */
+            --danger: #EF4444;
+            /* Red 500 */
+            --success: #10B981;
+            /* Emerald 500 */
+            --radius: 12px;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            background-image: radial-gradient(at 0% 0%, hsla(253, 16%, 7%, 1) 0, transparent 50%), radial-gradient(at 50% 0%, hsla(225, 39%, 30%, 1) 0, transparent 50%), radial-gradient(at 100% 0%, hsla(339, 49%, 30%, 1) 0, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: var(--radius);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 2.5rem;
+            position: relative;
+        }
+
+        h1 {
+            text-align: center;
+            font-weight: 700;
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        p.subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 3rem;
+            font-size: 1.1rem;
+        }
+
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .section-card:hover {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--bg-color);
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        input,
+        textarea {
+            font-family: var(--font-family);
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+            background: #F9FAFB;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            background: white;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            font-family: var(--font-family);
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            padding: 0.75rem 1.5rem;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        .btn-danger {
+            background-color: #FEF2F2;
+            color: var(--danger);
+            padding: 0.5rem 1rem;
+            font-size: 0.875rem;
+        }
+
+        .btn-danger:hover {
+            background-color: #FEE2E2;
+        }
+
+        /* Dynamic Item Container styles */
+        .dynamic-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .dynamic-item {
+            background: #F9FAFB;
+            border: 1px dashed var(--border-color);
+            border-radius: var(--radius);
+            padding: 1.5rem;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .dynamic-item-actions {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .export-panel {
+            position: sticky;
+            bottom: 2rem;
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 3rem;
+            border: 2px solid var(--primary);
+            z-index: 10;
+        }
+
+        .export-panel p {
+            margin: 0;
+            font-weight: 500;
+            color: var(--text-muted);
+        }
+
+        .skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .skill-tag {
+            background: var(--primary);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 999px;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            animation: fadeIn 0.2s ease;
+        }
+
+        .skill-tag button {
+            background: transparent;
+            color: rgba(255, 255, 255, 0.8);
+            border: none;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .skill-tag button:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            transform: none;
+        }
+
+        .saved-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .saved-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: #F9FAFB;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            transition: all 0.2s;
+        }
+
+        .saved-item:hover {
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .saved-item-info strong {
+            display: block;
+            color: var(--text-main);
+            margin-bottom: 0.25rem;
+        }
+
+        .saved-item-info span {
+            font-size: 0.875rem;
+            color: var(--text-muted);
+        }
+
+        .saved-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        @media (max-width: 640px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <h1>Resume Builder</h1>
+        <p class="subtitle">Enter your details below to generate a professionally formatted Markdown resume.</p>
+
+        <!-- Saved Resumes Panel -->
+        <div class="section-card saved-resumes-panel" style="display: none;" id="savedResumesPanel">
+            <div class="section-header">
+                <h2>Saved Resumes</h2>
+            </div>
+            <div id="savedResumesList" class="saved-list">
+                <!-- Dynamically populated -->
+            </div>
+        </div>
+
+        <!-- Personal Info -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Contact Information</h2>
+            </div>
+            <div class="form-grid">
+                <div class="form-group full-width">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" placeholder="Jane Doe">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" placeholder="jane@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="phone">Phone (Optional)</label>
+                    <input type="tel" id="phone" placeholder="(555) 123-4567">
+                </div>
+                <div class="form-group">
+                    <label for="location">Location (Optional)</label>
+                    <input type="text" id="location" placeholder="City, State">
+                </div>
+                <div class="form-group">
+                    <label for="portfolio">LinkedIn / Portfolio Repo (Optional)</label>
+                    <input type="url" id="portfolio" placeholder="linkedin.com/in/janedoe">
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Summary -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Professional Summary</h2>
+            </div>
+            <div class="form-group full-width">
+                <label for="summary">Brief overview of your professional background (Optional)</label>
+                <textarea id="summary" placeholder="Driven software engineer with 5 years of experience..."></textarea>
+            </div>
+        </div>
+
+        <!-- Experience -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Work Experience</h2>
+            </div>
+            <div id="experienceList" class="dynamic-list">
+                <!-- Dynamically populated -->
+            </div>
+            <button class="btn-secondary" onclick="addExperience()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add Experience
+            </button>
+        </div>
+
+        <!-- Education -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Education</h2>
+            </div>
+            <div id="educationList" class="dynamic-list">
+                <!-- Dynamically populated -->
+            </div>
+            <button class="btn-secondary" onclick="addEducation()">
+                <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add Education
+            </button>
+        </div>
+
+        <!-- Skills -->
+        <div class="section-card">
+            <div class="section-header">
+                <h2>Skills</h2>
+            </div>
+            <div id="skillsContainer" class="skills-container">
+                <!-- Dynamically populated tags -->
+            </div>
+            <div class="form-grid" style="align-items: flex-end;">
+                <div class="form-group" style="flex-grow: 1;">
+                    <label for="skillInput">Add a skill</label>
+                    <input type="text" id="skillInput" placeholder="e.g. JavaScript, Project Management">
+                </div>
+                <button class="btn-secondary" onclick="addSkill()" style="height: 44px;">Add</button>
+            </div>
+        </div>
+
+        <!-- Export Panel -->
+        <div class="export-panel" style="flex-wrap: wrap; gap: 1rem;">
+            <div>
+                <p>Ready to impress?</p>
+                <div style="margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                    <label for="pdfStyle" style="margin: 0; font-size: 0.875rem;">PDF Style:</label>
+                    <select id="pdfStyle"
+                        style="padding: 0.25rem 0.5rem; font-size: 0.875rem; border-radius: 4px; border: 1px solid var(--border-color); background: #F9FAFB;">
+                        <option value="default">Default</option>
+                        <option value="style-underline">Name Underline</option>
+                        <option value="style-border">Page Border</option>
+                        <option value="style-lines">Section Lines</option>
+                    </select>
+                </div>
+            </div>
+            <div style="display: flex; gap: 1rem; align-items: center;">
+                <button class="btn-secondary" onclick="saveResume()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4">
+                        </path>
+                    </svg>
+                    Save Draft
+                </button>
+                <button class="btn-secondary" onclick="exportPDF()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    Export as PDF
+                </button>
+                <button class="btn-primary" onclick="exportMarkdown()">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                    </svg>
+                    Export as Markdown
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Templates -->
+    <template id="experienceTemplate">
+        <div class="dynamic-item experience-item">
+            <div class="dynamic-item-actions">
+                <button class="btn-danger" onclick="this.closest('.dynamic-item').remove()">Remove</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Job Title *</label>
+                    <input type="text" class="exp-title" placeholder="Software Engineer">
+                </div>
+                <div class="form-group">
+                    <label>Company *</label>
+                    <input type="text" class="exp-company" placeholder="Acme Corp">
+                </div>
+                <div class="form-group">
+                    <label>Location (Optional)</label>
+                    <input type="text" class="exp-location" placeholder="New York, NY">
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: row; gap: 10px;">
+                    <div style="flex:1;">
+                        <label>Start Date</label>
+                        <input type="text" class="exp-start" placeholder="Jan 2020">
+                    </div>
+                    <div style="flex:1;">
+                        <label>End Date</label>
+                        <input type="text" class="exp-end" placeholder="Present">
+                    </div>
+                </div>
+                <div class="form-group full-width">
+                    <label>Responsibilities / Accomplishments (Bullet points, one per line)</label>
+                    <textarea class="exp-bullets"
+                        placeholder="• Developed scalable web applications...&#10;• Increased performance by 20%..."></textarea>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <template id="educationTemplate">
+        <div class="dynamic-item education-item">
+            <div class="dynamic-item-actions">
+                <button class="btn-danger" onclick="this.closest('.dynamic-item').remove()">Remove</button>
+            </div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Degree / Certificate *</label>
+                    <input type="text" class="edu-degree" placeholder="B.S. Computer Science">
+                </div>
+                <div class="form-group">
+                    <label>Institution *</label>
+                    <input type="text" class="edu-school" placeholder="University of Technology">
+                </div>
+                <div class="form-group">
+                    <label>Location (Optional)</label>
+                    <input type="text" class="edu-location" placeholder="Boston, MA">
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: row; gap: 10px;">
+                    <div style="flex:1;">
+                        <label>Start Date</label>
+                        <input type="text" class="edu-start" placeholder="Sep 2016">
+                    </div>
+                    <div style="flex:1;">
+                        <label>End Date / Grad</label>
+                        <input type="text" class="edu-end" placeholder="May 2020">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </template>
+
+    <script>
+        const skillsList = [];
+
+        function addExperience() {
+            const template = document.getElementById('experienceTemplate');
+            const clone = template.content.cloneNode(true);
+            document.getElementById('experienceList').appendChild(clone);
+        }
+
+        function addEducation() {
+            const template = document.getElementById('educationTemplate');
+            const clone = template.content.cloneNode(true);
+            document.getElementById('educationList').appendChild(clone);
+        }
+
+        function addSkill() {
+            const input = document.getElementById('skillInput');
+            const skill = input.value.trim();
+            if (skill && !skillsList.includes(skill)) {
+                skillsList.push(skill);
+                renderSkills();
+                input.value = '';
+            }
+        }
+
+        document.getElementById('skillInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                addSkill();
+            }
+        });
+
+        function removeSkill(skill) {
+            const index = skillsList.indexOf(skill);
+            if (index > -1) {
+                skillsList.splice(index, 1);
+                renderSkills();
+            }
+        }
+
+        function renderSkills() {
+            const container = document.getElementById('skillsContainer');
+            container.innerHTML = '';
+            skillsList.forEach(skill => {
+                const tag = document.createElement('div');
+                tag.className = 'skill-tag';
+                tag.appendChild(document.createTextNode(skill + ' '));
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.textContent = '×';
+                btn.setAttribute('aria-label', `Remove skill ${skill}`);
+                btn.addEventListener('click', () => removeSkill(skill));
+                tag.appendChild(btn);
+                container.appendChild(tag);
+            });
+        }
+
+        function buildMarkdown() {
+            let md = "";
+
+            // Personal Info
+            const name = document.getElementById('fullName').value.trim();
+            if (!name) {
+                alert("Please provide a Full Name.");
+                return null;
+            }
+            md += `# ${name}\n\n`;
+
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const portfolio = document.getElementById('portfolio').value.trim();
+
+            const contactParts = [];
+            if (email) contactParts.push(`[${email}](mailto:${email})`);
+            if (phone) contactParts.push(phone);
+            if (location) contactParts.push(location);
+            if (portfolio) contactParts.push(`[${portfolio}](${portfolio.startsWith('http') ? portfolio : 'https://' + portfolio})`);
+
+            if (contactParts.length > 0) {
+                md += contactParts.join(" | ") + "\n\n";
+            }
+
+            md += "---\n\n";
+
+            // Summary
+            const summary = document.getElementById('summary').value.trim();
+            if (summary) {
+                md += `## Professional Summary\n\n${summary}\n\n`;
+            }
+
+            // Experience
+            const expItems = document.querySelectorAll('.experience-item');
+            if (expItems.length > 0) {
+                md += `## Experience\n\n`;
+                expItems.forEach(item => {
+                    const title = item.querySelector('.exp-title').value.trim();
+                    const company = item.querySelector('.exp-company').value.trim();
+                    const loc = item.querySelector('.exp-location').value.trim();
+                    const start = item.querySelector('.exp-start').value.trim();
+                    const end = item.querySelector('.exp-end').value.trim();
+                    const bulletsStr = item.querySelector('.exp-bullets').value.trim();
+
+                    if (!title && !company) return; // Skip totally empty
+
+                    // ### **Job Title** | *Company*
+                    md += `### **${title || "Job Title"}**`;
+                    if (company) md += ` | *${company}*`;
+                    md += `\n`;
+
+                    // Date & Location line
+                    const metaParts = [];
+                    if (start || end) metaParts.push(`${start || 'Unknown'} - ${end || 'Present'}`);
+                    if (loc) metaParts.push(loc);
+
+                    if (metaParts.length > 0) {
+                        md += `*${metaParts.join(" | ")}*\n\n`;
+                    } else {
+                        md += `\n`;
+                    }
+
+                    // Bullets
+                    if (bulletsStr) {
+                        const bullets = bulletsStr.split('\n');
+                        bullets.forEach(b => {
+                            let cleanBullet = b.trim();
+                            if (cleanBullet.startsWith('•')) cleanBullet = cleanBullet.substring(1).trim();
+                            if (cleanBullet.startsWith('-')) cleanBullet = cleanBullet.substring(1).trim();
+                            if (cleanBullet) {
+                                md += `- ${cleanBullet}\n`;
+                            }
+                        });
+                        md += `\n`;
+                    }
+                });
+            }
+
+            // Education
+            const eduItems = document.querySelectorAll('.education-item');
+            if (eduItems.length > 0) {
+                let hasEdu = false;
+                let eduMd = `## Education\n\n`;
+                eduItems.forEach(item => {
+                    const degree = item.querySelector('.edu-degree').value.trim();
+                    const school = item.querySelector('.edu-school').value.trim();
+                    const loc = item.querySelector('.edu-location').value.trim();
+                    const start = item.querySelector('.edu-start').value.trim();
+                    const end = item.querySelector('.edu-end').value.trim();
+
+                    if (!degree && !school) return;
+                    hasEdu = true;
+
+                    eduMd += `### **${degree || "Degree"}**`;
+                    if (school) eduMd += ` | *${school}*`;
+                    eduMd += `\n`;
+
+                    const metaParts = [];
+                    if (start || end) metaParts.push(`${start || 'Unknown'} - ${end || 'Unknown'}`);
+                    if (loc) metaParts.push(loc);
+
+                    if (metaParts.length > 0) {
+                        eduMd += `*${metaParts.join(" | ")}*\n\n`;
+                    } else {
+                        eduMd += `\n`;
+                    }
+                });
+                if (hasEdu) md += eduMd;
+            }
+
+            // Skills
+            if (skillsList.length > 0) {
+                md += `## Skills\n\n`;
+                md += skillsList.join(" • ") + "\n\n";
+            }
+
+            return md.trim();
+        }
+
+        function exportMarkdown() {
+            const markdown = buildMarkdown();
+            if (!markdown) return; // Validation failed
+
+            const blob = new Blob([markdown], { type: 'text/markdown' });
+            const url = URL.createObjectURL(blob);
+
+            const nameBase = document.getElementById('fullName').value.trim().replace(/\s+/g, '_') || 'Resume';
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${nameBase}_Resume.md`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function exportPDF() {
+            const name = document.getElementById('fullName').value.trim();
+            if (!name) {
+                alert("Please provide a Full Name.");
+                return;
+            }
+
+            const email = document.getElementById('email').value.trim();
+            const phone = document.getElementById('phone').value.trim();
+            const location = document.getElementById('location').value.trim();
+            const portfolio = document.getElementById('portfolio').value.trim();
+
+            const contactParts = [];
+            if (email) contactParts.push(email);
+            if (phone) contactParts.push(phone);
+            if (location) contactParts.push(location);
+            if (portfolio) contactParts.push(portfolio);
+
+            const selectedStyle = document.getElementById('pdfStyle') ? document.getElementById('pdfStyle').value : 'default';
+            let extraStyles = '';
+
+            if (selectedStyle === 'style-underline') {
+                extraStyles = `
+                    h1 { border-bottom: 1px solid #000; padding-bottom: 10px; margin-bottom: 15px; display: inline-block; }
+                    .header-container { text-align: center; }
+                `;
+            } else if (selectedStyle === 'style-border') {
+                extraStyles = `
+                    @media print {
+                        body { 
+                            margin: 0.5in; 
+                            padding: 0.5in; 
+                            box-sizing: border-box; 
+                            height: 10in; 
+                            border: 1px solid #000; 
+                        }
+                    }
+                `;
+            } else if (selectedStyle === 'style-lines') {
+                extraStyles = `
+                    h1 { border-bottom: 3px solid #000; padding-bottom: 8px; margin-bottom: 15px; }
+                    h2 { border-bottom: 2px solid #000; padding-bottom: 4px; }
+                `;
+            }
+
+            let html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>${name} Resume</title>
+                <style>
+                    body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.4; margin: 0; padding: 40px; }
+                    h1 { margin: 0 0 5px 0; font-size: 24px; text-align: center; color: #000; }
+                    .contact-info { text-align: center; font-size: 13px; color: #555; margin-bottom: 20px; }
+                    h2 { font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-top: 20px; margin-bottom: 10px; color: #000; text-transform: uppercase; }
+                    .job { margin-bottom: 15px; }
+                    .job-header { display: flex; justify-content: space-between; align-items: baseline; }
+                    .job-title { font-weight: bold; font-size: 14px; color: #000; }
+                    .job-company { font-style: italic; font-size: 14px; }
+                    .job-date, .job-location { font-size: 13px; color: #555; }
+                    ul { margin: 5px 0 0 0; padding-left: 20px; font-size: 13px; }
+                    li { margin-bottom: 3px; }
+                    .skills { font-size: 13px; line-height: 1.6; }
+                    .summary { font-size: 13px; margin-bottom: 15px; }
+                    @page { margin: 0; }
+                    @media print {
+                        body { padding: 1in 0.75in; }
+                    }
+                    ${extraStyles}
+                </style>
+            </head>
+            <body>
+                <div class="header-container">
+                    <h1>${name}</h1>
+                </div>
+                <div class="contact-info">${contactParts.join(' &nbsp;|&nbsp; ')}</div>
+            `;
+
+            const summary = document.getElementById('summary').value.trim();
+            if (summary) {
+                html += `<h2>Professional Summary</h2><div class="summary">${summary}</div>`;
+            }
+
+            const expItems = document.querySelectorAll('.experience-item');
+            if (expItems.length > 0) {
+                let hasExp = false;
+                let expHtml = `<h2>Experience</h2>`;
+                expItems.forEach(item => {
+                    const title = item.querySelector('.exp-title').value.trim();
+                    const company = item.querySelector('.exp-company').value.trim();
+                    const loc = item.querySelector('.exp-location').value.trim();
+                    const start = item.querySelector('.exp-start').value.trim();
+                    const end = item.querySelector('.exp-end').value.trim();
+                    const bulletsStr = item.querySelector('.exp-bullets').value.trim();
+
+                    if (!title && !company) return;
+                    hasExp = true;
+
+                    expHtml += `<div class="job">
+                        <div class="job-header">
+                            <div><span class="job-title">${title || 'Job Title'}</span> | <span class="job-company">${company || ''}</span></div>
+                            <div class="job-date">${start || 'Unknown'} - ${end || 'Present'}</div>
+                        </div>
+                        <div class="job-location">${loc || ''}</div>
+                    `;
+
+                    if (bulletsStr) {
+                        expHtml += `<ul>`;
+                        const bullets = bulletsStr.split('\n');
+                        bullets.forEach(b => {
+                            let cleanBullet = b.trim();
+                            if (cleanBullet.startsWith('•')) cleanBullet = cleanBullet.substring(1).trim();
+                            if (cleanBullet.startsWith('-')) cleanBullet = cleanBullet.substring(1).trim();
+                            if (cleanBullet) {
+                                expHtml += `<li>${cleanBullet}</li>`;
+                            }
+                        });
+                        expHtml += `</ul>`;
+                    }
+                    expHtml += `</div>`;
+                });
+                if (hasExp) html += expHtml;
+            }
+
+            const eduItems = document.querySelectorAll('.education-item');
+            if (eduItems.length > 0) {
+                let hasEdu = false;
+                let eduHtml = `<h2>Education</h2>`;
+                eduItems.forEach(item => {
+                    const degree = item.querySelector('.edu-degree').value.trim();
+                    const school = item.querySelector('.edu-school').value.trim();
+                    const loc = item.querySelector('.edu-location').value.trim();
+                    const start = item.querySelector('.edu-start').value.trim();
+                    const end = item.querySelector('.edu-end').value.trim();
+
+                    if (!degree && !school) return;
+                    hasEdu = true;
+
+                    eduHtml += `<div class="job">
+                        <div class="job-header">
+                            <div><span class="job-title">${degree || 'Degree'}</span> | <span class="job-company">${school || ''}</span></div>
+                            <div class="job-date">${start || 'Unknown'} - ${end || 'Unknown'}</div>
+                        </div>
+                        <div class="job-location">${loc || ''}</div>
+                    </div>`;
+                });
+                if (hasEdu) html += eduHtml;
+            }
+
+            if (skillsList.length > 0) {
+                html += `<h2>Skills</h2><div class="skills">${skillsList.join(' &nbsp;•&nbsp; ')}</div>`;
+            }
+
+            html += `</body></html>`;
+
+            const printWindow = window.open('', '_blank');
+            if (printWindow) {
+                printWindow.document.open();
+                printWindow.document.write(html);
+                printWindow.document.close();
+
+                // Wait a tiny bit for styles to apply before printing
+                setTimeout(() => {
+                    printWindow.print();
+                }, 250);
+            } else {
+                alert("Please allow popups for this website to export to PDF.");
+            }
+        }
+
+        // Save and Load logic
+
+        const STORAGE_KEY = 'resumeBuilder_saves';
+
+        function loadSaves() {
+            return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        }
+
+        function updateSavedListUI() {
+            const saves = loadSaves();
+            const panel = document.getElementById('savedResumesPanel');
+            const list = document.getElementById('savedResumesList');
+
+            list.innerHTML = '';
+            const keys = Object.keys(saves);
+
+            if (keys.length === 0) {
+                panel.style.display = 'none';
+                return;
+            }
+
+            panel.style.display = 'block';
+
+            keys.forEach(key => {
+                const save = saves[key];
+                const dateStr = new Date(save.timestamp).toLocaleString();
+
+                const item = document.createElement('div');
+                item.className = 'saved-item';
+
+                const info = document.createElement('div');
+                info.className = 'saved-item-info';
+                const strong = document.createElement('strong');
+                strong.textContent = key;
+                const span = document.createElement('span');
+                span.textContent = `Saved: ${dateStr}`;
+                info.appendChild(strong);
+                info.appendChild(span);
+
+                const actions = document.createElement('div');
+                actions.className = 'saved-item-actions';
+                const loadBtn = document.createElement('button');
+                loadBtn.className = 'btn-secondary';
+                loadBtn.type = 'button';
+                loadBtn.textContent = 'Load';
+                loadBtn.addEventListener('click', () => loadResume(key));
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-danger';
+                delBtn.type = 'button';
+                delBtn.textContent = 'Delete';
+                delBtn.addEventListener('click', () => deleteSave(key));
+                actions.appendChild(loadBtn);
+                actions.appendChild(delBtn);
+
+                item.appendChild(info);
+                item.appendChild(actions);
+                list.appendChild(item);
+            });
+        }
+
+        function saveResume() {
+            const nameBase = document.getElementById('fullName').value.trim() || 'Untitled';
+            const saveName = prompt("Enter a name for this save:", nameBase + " Resume");
+
+            if (!saveName) return;
+
+            const data = {
+                timestamp: Date.now(),
+                pdfStyle: document.getElementById('pdfStyle') ? document.getElementById('pdfStyle').value : 'default',
+                contact: {
+                    fullName: document.getElementById('fullName').value,
+                    email: document.getElementById('email').value,
+                    phone: document.getElementById('phone').value,
+                    location: document.getElementById('location').value,
+                    portfolio: document.getElementById('portfolio').value,
+                    summary: document.getElementById('summary').value
+                },
+                experience: [],
+                education: [],
+                skills: [...skillsList]
+            };
+
+            document.querySelectorAll('.experience-item').forEach(item => {
+                data.experience.push({
+                    title: item.querySelector('.exp-title').value,
+                    company: item.querySelector('.exp-company').value,
+                    location: item.querySelector('.exp-location').value,
+                    start: item.querySelector('.exp-start').value,
+                    end: item.querySelector('.exp-end').value,
+                    bullets: item.querySelector('.exp-bullets').value
+                });
+            });
+
+            document.querySelectorAll('.education-item').forEach(item => {
+                data.education.push({
+                    degree: item.querySelector('.edu-degree').value,
+                    school: item.querySelector('.edu-school').value,
+                    location: item.querySelector('.edu-location').value,
+                    start: item.querySelector('.edu-start').value,
+                    end: item.querySelector('.edu-end').value
+                });
+            });
+
+            const saves = loadSaves();
+            saves[saveName] = data;
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+
+            updateSavedListUI();
+            alert(`Resume saved as "${saveName}"!`);
+        }
+
+        function loadResume(saveName) {
+            if (!confirm(`Load "${saveName}"? Current unsaved changes will be lost.`)) return;
+
+            const saves = loadSaves();
+            const data = saves[saveName];
+            if (!data) return;
+
+            // Load Settings
+            if (document.getElementById('pdfStyle')) {
+                document.getElementById('pdfStyle').value = data.pdfStyle || 'default';
+            }
+
+            // Load Contact
+            document.getElementById('fullName').value = data.contact.fullName || '';
+            document.getElementById('email').value = data.contact.email || '';
+            document.getElementById('phone').value = data.contact.phone || '';
+            document.getElementById('location').value = data.contact.location || '';
+            document.getElementById('portfolio').value = data.contact.portfolio || '';
+            document.getElementById('summary').value = data.contact.summary || '';
+
+            // Load Experience
+            const expList = document.getElementById('experienceList');
+            expList.innerHTML = '';
+            data.experience.forEach(exp => {
+                addExperience();
+                const items = expList.querySelectorAll('.experience-item');
+                const lastItem = items[items.length - 1];
+                lastItem.querySelector('.exp-title').value = exp.title || '';
+                lastItem.querySelector('.exp-company').value = exp.company || '';
+                lastItem.querySelector('.exp-location').value = exp.location || '';
+                lastItem.querySelector('.exp-start').value = exp.start || '';
+                lastItem.querySelector('.exp-end').value = exp.end || '';
+                lastItem.querySelector('.exp-bullets').value = exp.bullets || '';
+            });
+            if (data.experience.length === 0) addExperience(); // maintain at least one empty
+
+            // Load Education
+            const eduList = document.getElementById('educationList');
+            eduList.innerHTML = '';
+            data.education.forEach(edu => {
+                addEducation();
+                const items = eduList.querySelectorAll('.education-item');
+                const lastItem = items[items.length - 1];
+                lastItem.querySelector('.edu-degree').value = edu.degree || '';
+                lastItem.querySelector('.edu-school').value = edu.school || '';
+                lastItem.querySelector('.edu-location').value = edu.location || '';
+                lastItem.querySelector('.edu-start').value = edu.start || '';
+                lastItem.querySelector('.edu-end').value = edu.end || '';
+            });
+            if (data.education.length === 0) addEducation();
+
+            // Load Skills
+            skillsList.length = 0; // clear array
+            if (data.skills) {
+                data.skills.forEach(s => skillsList.push(s));
+            }
+            renderSkills();
+
+            alert(`Successfully loaded "${saveName}".`);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function deleteSave(saveName) {
+            if (!confirm(`Are you sure you want to delete "${saveName}"?`)) return;
+            const saves = loadSaves();
+            delete saves[saveName];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(saves));
+            updateSavedListUI();
+        }
+
+        // Initialize with one empty experience and education
+        window.onload = () => {
+            addExperience();
+            addEducation();
+            updateSavedListUI();
+        };
+    </script>
+</body>
+
+</html>
