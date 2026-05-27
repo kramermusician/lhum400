@@ -1,0 +1,1067 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Welcome to LHUM400</title>
+<style>
+  :root {
+    --paper: #F1ECE2;
+    --ink: #2C3742;
+    --ink-soft: #6E7884;
+    --khaki: #A8866A;
+    --khaki-soft: #D9C8AA;
+    --sage: #6B8A82;
+    --blue: #5A7A95;
+    --line: #D8CFBF;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4vh 8vw;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 600ms ease, transform 600ms ease;
+    pointer-events: none;
+    text-align: center;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  .eyebrow {
+    font-size: clamp(0.78rem, 1vw, 0.95rem);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 3vh;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7em;
+  }
+
+  .eyebrow::before {
+    content: "";
+    width: 0.45em;
+    height: 0.45em;
+    background: var(--khaki);
+    border-radius: 50%;
+  }
+
+  .slide-number {
+    position: absolute;
+    top: 4vh;
+    left: 4vw;
+    font-family: Georgia, ui-serif, serif;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .slide-number::after {
+    content: "";
+    display: block;
+    width: 18px;
+    height: 1px;
+    background: var(--line);
+    margin-top: 4px;
+  }
+
+  .headline {
+    font-family: Georgia, "Times New Roman", ui-serif, serif;
+    font-weight: 400;
+    font-size: clamp(2.6rem, 6vw, 5.4rem);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    max-width: 18ch;
+  }
+
+  .headline .accent {
+    color: var(--khaki);
+    font-style: italic;
+  }
+
+  .sub {
+    margin-top: 3.5vh;
+    font-size: clamp(1.05rem, 1.6vw, 1.45rem);
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 38ch;
+    font-weight: 400;
+  }
+
+  /* Parenthetical aside: forced to its own block so it lands as one line
+     and reads as a softer side-comment. */
+  .aside {
+    display: block;
+    margin-top: 0.6em;
+    font-style: italic;
+    opacity: 0.85;
+  }
+  .sub .aside {
+    margin-top: 1.2em;
+    color: var(--ink);
+  }
+
+  .two-line {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5vh;
+  }
+
+  .two-line .quiet { color: var(--ink-soft); }
+
+  .word-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.2vh 2.4vw;
+    margin-top: 2vh;
+    max-width: 56vw;
+  }
+
+  .word-cloud > span {
+    font-family: Georgia, ui-serif, serif;
+    font-size: clamp(1.5rem, 3.2vw, 2.6rem);
+    color: var(--ink);
+    opacity: 0.95;
+    position: relative;
+    cursor: default;
+    transition: transform 650ms cubic-bezier(0.22, 1, 0.36, 1),
+                opacity 400ms ease;
+    will-change: transform, opacity;
+  }
+
+  .word-cloud > span:nth-child(3n+1) { color: var(--khaki); }
+  .word-cloud > span:nth-child(3n+2) { color: var(--sage); }
+  .word-cloud > span:nth-child(3n)   { color: var(--ink); font-style: italic; }
+
+  .word-cloud > span:focus { outline: none; }
+
+  /* Zoomed: siblings scatter (JS sets translate) + fade. Focused word
+     stays put and slightly enlarges; its .related becomes visible. */
+  .word-cloud.zoomed > span { opacity: 0; pointer-events: none; }
+  .word-cloud.zoomed > span.is-focus {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1.06);
+    z-index: 5;
+  }
+
+  /* Phrase list anchored below the focused word, centered. */
+  .word-cloud .related {
+    position: absolute;
+    top: calc(100% + 1em);
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.45em;
+    font-family: Georgia, ui-serif, serif;
+    font-size: clamp(1rem, 1.5vw, 1.4rem);
+    font-style: normal;
+    color: var(--ink);
+    white-space: nowrap;
+    visibility: hidden;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  .word-cloud > span.is-focus .related { visibility: visible; }
+
+  .word-cloud .related b {
+    display: block;
+    font-weight: 400;
+    font-style: normal;
+    color: var(--ink);
+    opacity: 0;
+  }
+
+  .word-cloud > span.is-focus .related b {
+    animation: phrase-float-in 700ms cubic-bezier(0.34, 1.56, 0.64, 1) forwards,
+               phrase-bob 3.4s ease-in-out 0.9s infinite;
+  }
+
+  .word-cloud > span.is-focus .related b:nth-child(1) { animation-delay: 60ms,  0.9s; }
+  .word-cloud > span.is-focus .related b:nth-child(2) { animation-delay: 130ms, 1.0s; }
+  .word-cloud > span.is-focus .related b:nth-child(3) { animation-delay: 200ms, 1.1s; }
+  .word-cloud > span.is-focus .related b:nth-child(4) { animation-delay: 270ms, 1.2s; }
+  .word-cloud > span.is-focus .related b:nth-child(5) { animation-delay: 340ms, 1.3s; }
+  .word-cloud > span.is-focus .related b:nth-child(6) { animation-delay: 410ms, 1.4s; }
+  .word-cloud > span.is-focus .related b:nth-child(7) { animation-delay: 480ms, 1.5s; }
+
+  @keyframes phrase-float-in {
+    0%   { opacity: 0; transform: translateY(18px) scale(0.94); }
+    55%  { opacity: 1; transform: translateY(-5px) scale(1.02); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes phrase-bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-3px); }
+  }
+
+  /* Quiet the rest of the slide while a word is in focus. */
+  .slide .eyebrow,
+  .slide .headline,
+  .slide .sub { transition: opacity 900ms cubic-bezier(0.22, 1, 0.36, 1); }
+  .slide.cloud-zoomed .eyebrow,
+  .slide.cloud-zoomed .sub { opacity: 0.12; }
+  .slide.cloud-zoomed .headline { opacity: 0.5; }
+
+  /* Habit-loop background: a ring of cells fills one tick at a time,
+     completes the loop, and resets. Sits behind the headline. */
+  .habit-loop {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    display: grid;
+    place-items: center;
+    opacity: 0.45;
+  }
+
+  .habit-ring {
+    position: relative;
+    width: min(72vh, 72vw);
+    aspect-ratio: 1 / 1;
+  }
+
+  /* Each cell is positioned around the ring via --i (0..N-1) and N total. */
+  .habit-cell {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: clamp(28px, 3.6vw, 56px);
+    height: clamp(28px, 3.6vw, 56px);
+    margin-left: calc(clamp(28px, 3.6vw, 56px) / -2);
+    margin-top: calc(clamp(28px, 3.6vw, 56px) / -2);
+    border-radius: 50%;
+    background: transparent;
+    border: 2px solid var(--line);
+    transform: rotate(calc(360deg * var(--i) / var(--n))) translateY(calc(min(36vh, 36vw) * -1));
+    transition: background 320ms ease, border-color 320ms ease, transform 320ms ease;
+  }
+
+  .habit-cell.filled {
+    background: var(--khaki);
+    border-color: var(--khaki);
+  }
+
+  .habit-cell.filled.sage   { background: var(--sage);  border-color: var(--sage);  }
+  .habit-cell.filled.blue   { background: var(--blue);  border-color: var(--blue);  }
+
+  /* Faint center dial so the ring reads as a "habit tracker", not a clock. */
+  .habit-center {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: clamp(80px, 12vw, 160px);
+    height: clamp(80px, 12vw, 160px);
+    margin-left: calc(clamp(80px, 12vw, 160px) / -2);
+    margin-top: calc(clamp(80px, 12vw, 160px) / -2);
+    border: 1px dashed var(--line);
+    border-radius: 50%;
+    opacity: 0.5;
+  }
+
+  /* Keep text crisply above the ring. */
+  .habit-slide > .eyebrow,
+  .habit-slide > .headline,
+  .habit-slide > .sub,
+  .habit-slide > .habit-toggle,
+  .habit-slide > .habit-examples { position: relative; z-index: 2; }
+
+  .habit-loop.paused .habit-cell { transition: none; }
+
+  .pause-btn {
+    position: absolute;
+    bottom: 3vh;
+    right: 3vw;
+    z-index: 3;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.85rem;
+    padding: 0.4em 0.9em;
+    border-radius: 999px;
+    cursor: pointer;
+    opacity: 0.7;
+    transition: opacity 150ms ease, background 150ms ease;
+  }
+  .pause-btn:hover { opacity: 1; background: var(--khaki-soft); }
+
+  /* Tiny-habits grid: things students can actually start tomorrow. */
+  .habit-toggle {
+    margin-top: 2.4vh;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.9rem;
+    padding: 0.45em 1em;
+    border-radius: 999px;
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 150ms ease, background 150ms ease;
+  }
+  .habit-toggle:hover { opacity: 1; background: var(--khaki-soft); }
+
+  .habit-examples {
+    margin-top: 2vh;
+    display: none;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6vh 1.6vw;
+    width: min(70vw, 720px);
+    padding: 1.4vh 1.6vw;
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    backdrop-filter: blur(2px);
+    text-align: left;
+  }
+  .habit-examples.show { display: grid; }
+  .habit-examples span {
+    font-size: clamp(0.95rem, 1.4vw, 1.2rem);
+    padding: 0.6vh 0.4vw;
+    color: var(--ink);
+    border-bottom: 1px dashed var(--line);
+  }
+  .habit-examples span:nth-last-child(-n+2) { border-bottom: none; }
+  .habit-examples span em {
+    color: var(--khaki);
+    font-style: italic;
+    margin-right: 0.4em;
+  }
+
+  /* Contact slide: centered contact info, no background animation. */
+  .contact-name {
+    font-family: Georgia, "Times New Roman", ui-serif, serif;
+    color: var(--ink);
+    line-height: 1;
+    margin-bottom: 4vh;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.35em;
+    flex-wrap: nowrap;
+  }
+  .contact-name .given,
+  .contact-name .family {
+    font-size: clamp(1.1rem, 2.2vw, 1.9rem);
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+  .contact-name .middle {
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 400;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .contact-email {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 5.6vw, 4.8rem);
+    letter-spacing: 0.01em;
+    color: var(--ink);
+    margin-top: 1vh;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .contact-ig-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4vw;
+    margin-top: 4vh;
+  }
+  .contact-ig {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1;
+  }
+  .contact-ig .ig-handle {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-weight: 600;
+    font-size: clamp(1.6rem, 4.2vw, 3.6rem);
+    color: var(--blue);
+  }
+  .contact-ig small {
+    margin-top: 0.6em;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+  .contact-qr {
+    width: clamp(140px, 18vw, 240px);
+    height: auto;
+    background: #fff;
+    padding: 6px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+  }
+
+  .contact-note {
+    margin-top: 5vh;
+    max-width: 60vw;
+    font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+    color: var(--ink);
+    line-height: 1.6;
+    text-align: center;
+  }
+  .contact-note em { font-style: italic; color: var(--blue); }
+
+  /* Topics grid: 2-col territory map sourced from the syllabus. */
+  .topics-grid {
+    margin-top: 2vh;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.6vh 4vw;
+    width: min(76vw, 880px);
+    text-align: left;
+  }
+
+  .topic {
+    padding-left: 1.4em;
+    position: relative;
+  }
+
+  .topic::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.85em;
+    width: 0.8em;
+    height: 2px;
+    background: var(--khaki);
+  }
+
+  .topic-label {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 0.3em;
+  }
+
+  .topic-name {
+    font-family: Georgia, ui-serif, serif;
+    font-size: clamp(1.05rem, 1.7vw, 1.5rem);
+    line-height: 1.3;
+    color: var(--ink);
+  }
+
+  .activity-list {
+    list-style: none;
+    margin-top: 2vh;
+    display: grid;
+    gap: 1.6vh;
+    text-align: left;
+  }
+
+  .activity-list li {
+    font-family: Georgia, ui-serif, serif;
+    font-size: clamp(1.4rem, 2.4vw, 2rem);
+    color: var(--ink);
+    padding-left: 1.4em;
+    position: relative;
+  }
+
+  .activity-list li::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0.7em;
+    width: 0.8em;
+    height: 2px;
+    background: var(--khaki);
+  }
+
+  .closing-name {
+    margin-top: 4vh;
+    font-size: clamp(0.95rem, 1.3vw, 1.15rem);
+    letter-spacing: 0.1em;
+    color: var(--ink-soft);
+  }
+
+  .closing-name strong {
+    font-weight: 400;
+    color: var(--ink);
+    display: block;
+    margin-top: 0.4em;
+    letter-spacing: 0.04em;
+  }
+
+  /* Controls */
+  .controls {
+    position: fixed;
+    bottom: 3vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    z-index: 10;
+  }
+
+  .ctrl {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 1rem;
+    display: grid;
+    place-items: center;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+
+  .ctrl:hover {
+    background: var(--khaki-soft);
+    border-color: var(--khaki-soft);
+  }
+
+  .counter {
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+    min-width: 4ch;
+    text-align: center;
+  }
+
+  .dots {
+    position: fixed;
+    bottom: 1.2vh;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    z-index: 10;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--line);
+    transition: background 200ms ease, transform 200ms ease;
+  }
+
+  .dot.active {
+    background: var(--khaki);
+    transform: scale(1.3);
+  }
+
+  .attribution {
+    position: fixed;
+    bottom: 1.2vh;
+    right: 2vw;
+    font-size: 0.75rem;
+    font-style: italic;
+    color: var(--ink-soft);
+    z-index: 10;
+  }
+
+  .hint {
+    position: fixed;
+    top: 2vh;
+    right: 2vw;
+    font-size: 0.75rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+    z-index: 10;
+  }
+
+  @media (max-width: 700px) {
+    .word-cloud { max-width: 90vw; }
+    .controls { gap: 0.8rem; }
+  }
+
+  /* Big-topics typography grid (slide 08) */
+  .big-topics-slide { gap: 1vh; }
+  .big-topics-slide .eyebrow { margin-bottom: 0.4vh; }
+  .big-topics-slide .headline { margin-bottom: 4vh; }
+  .big-topics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4.5vh 3.5vw;
+    width: min(86vw, 1100px);
+    text-align: left;
+  }
+  .big-topic {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7em;
+  }
+  .big-num {
+    font-family: Georgia, "Times New Roman", ui-serif, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: clamp(1.4rem, 2.2vw, 2.4rem);
+    line-height: 1;
+    color: var(--khaki);
+    letter-spacing: -0.02em;
+    flex-shrink: 0;
+  }
+  .big-name {
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "Inter", sans-serif;
+    font-weight: 800;
+    font-size: clamp(0.95rem, 1.5vw, 1.45rem);
+    line-height: 1.15;
+    letter-spacing: -0.005em;
+    color: var(--ink);
+  }
+  /* Per-topic typographic variation — each cell deliberately styled */
+  .big-topic.t-serif .big-name { font-family: Georgia, "Times New Roman", ui-serif, serif; font-weight: 700; letter-spacing: -0.01em; }
+  .big-topic.t-italic .big-name { font-style: italic; font-weight: 700; }
+  .big-topic.t-blue .big-name { color: var(--blue); }
+  .big-topic.t-sage .big-name { color: var(--sage); }
+  .big-topic.t-khaki .big-name { color: var(--khaki); }
+  .big-topic.t-bold .big-name { font-weight: 900; font-size: clamp(1.05rem, 1.65vw, 1.6rem); }
+  .big-topic.t-num-blue .big-num { color: var(--blue); }
+  .big-topic.t-num-sage .big-num { color: var(--sage); }
+  .big-topic.t-num-ink .big-num { color: var(--ink); font-style: normal; font-weight: 800; }
+  @media (max-width: 800px) {
+    .big-topics { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3vh 3vw; }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide active">
+    <div class="slide-number">01</div>
+    <div class="eyebrow">LHUM400 / Summer</div>
+    <h1 class="headline">Welcome to a class about how a career <span class="accent">actually</span> gets built.</h1>
+    <p class="sub">Not in a flash. Not by hustling yourself sick. One small habit at a time, until one day you turn around and the career is behind you.</p>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide habit-slide">
+    <div class="slide-number">02</div>
+    <div class="habit-loop" id="habitLoop">
+      <div class="habit-ring" id="habitRing"></div>
+      <div class="habit-center"></div>
+    </div>
+    <button class="pause-btn" id="pauseLoop" aria-pressed="false" aria-label="Pause habit loop animation">⏸ Pause</button>
+    <div class="eyebrow">Idea 1</div>
+    <h1 class="headline">Small habits <span class="accent">compound</span>.</h1>
+    <p class="sub">Nobody graduates and gets handed a career. They get handed a Tuesday. What you do on Tuesday, over and over, is the career.</p>
+    <button class="habit-toggle" id="habitToggle" aria-expanded="false" aria-controls="habitList">Show tiny habits</button>
+    <div class="habit-examples" id="habitList" role="list" aria-label="Tiny habits you can start this week">
+      <span role="listitem"><em>track</em> one dollar you spent today</span>
+      <span role="listitem"><em>send</em> one follow-up message</span>
+      <span role="listitem"><em>save</em> five dollars somewhere</span>
+      <span role="listitem"><em>practice</em> for fifteen minutes</span>
+      <span role="listitem"><em>write</em> down one win from today</span>
+      <span role="listitem"><em>ask</em> one person how they got their gig</span>
+      <span role="listitem"><em>say no</em> to one thing that drains you</span>
+      <span role="listitem"><em>show up</em> ten minutes early once</span>
+      <span role="listitem"><em>delegate</em> one task you have been hoarding</span>
+      <span role="listitem"><em>inventory</em> your skills, your gear, your contacts</span>
+    </div>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="slide-number">03</div>
+    <div class="eyebrow">Idea 2</div>
+    <div class="two-line">
+      <h1 class="headline">You forget the lecture.</h1>
+      <h1 class="headline quiet">You do not forget the <span class="accent">rent</span>.</h1>
+    </div>
+    <p class="sub">Real-world stuff sticks because it is real. The first time you negotiate, the first time you file taxes, the first time you say no to a bad gig. We are going to rehearse those moments now, while the stakes are still low.</p>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="slide-number">04</div>
+    <div class="eyebrow">Idea 3</div>
+    <h1 class="headline">You already have more of a career than you think.</h1>
+    <div class="word-cloud">
+      <span tabindex="0">gigs<span class="related" role="tooltip"><b>find a gig</b><b>book a gig</b><b>send the press kit for the gig</b><b>post flyers for the gig</b><b>hire a drummer for the gig</b><b>set up for the gig</b><b>get paid for the gig</b></span></span>
+      <span tabindex="0">lessons<span class="related" role="tooltip"><b>book a lesson</b><b>price a lesson</b><b>plan the lesson</b><b>run the lesson</b><b>follow up after the lesson</b><b>get paid for the lesson</b></span></span>
+      <span tabindex="0">sessions<span class="related" role="tooltip"><b>land a session</b><b>prep for the session</b><b>charge for the session</b><b>show up early for the session</b><b>send the session files</b><b>follow up after the session</b></span></span>
+      <span tabindex="0">collabs<span class="related" role="tooltip"><b>propose a collab</b><b>share files for the collab</b><b>split credit on the collab</b><b>sign the contract for the collab</b><b>release the collab</b><b>promote the collab</b></span></span>
+      <span tabindex="0">demos<span class="related" role="tooltip"><b>record a demo</b><b>mix the demo</b><b>send the demo</b><b>get feedback on the demo</b><b>pitch the demo</b><b>follow up on the demo</b></span></span>
+      <span tabindex="0">tips<span class="related" role="tooltip"><b>track your tips</b><b>save your tips</b><b>cash out tips</b><b>report tips on taxes</b><b>split tips with the band</b><b>budget around tip nights</b></span></span>
+      <span tabindex="0">resumes<span class="related" role="tooltip"><b>write your resume</b><b>update your resume</b><b>tailor your resume to the job</b><b>proofread your resume</b><b>send your resume</b><b>follow up after sending your resume</b></span></span>
+      <span tabindex="0">tracks<span class="related" role="tooltip"><b>record a track</b><b>master the track</b><b>register the track</b><b>release the track</b><b>pitch the track</b><b>split royalties on the track</b></span></span>
+      <span tabindex="0">students<span class="related" role="tooltip"><b>recruit students</b><b>retain students</b><b>invoice students</b><b>schedule with students</b><b>set boundaries with students</b><b>write recs for students</b></span></span>
+      <span tabindex="0">contacts<span class="related" role="tooltip"><b>save the contact</b><b>follow up with the contact</b><b>introduce two contacts</b><b>refer the contact</b><b>re-engage an old contact</b><b>pitch the contact</b></span></span>
+      <span tabindex="0">shows<span class="related" role="tooltip"><b>book the show</b><b>promote the show</b><b>soundcheck the show</b><b>load in for the show</b><b>settle up after the show</b><b>livestream the show</b></span></span>
+      <span tabindex="0">followers<span class="related" role="tooltip"><b>grow your followers</b><b>engage your followers</b><b>thank your followers</b><b>convert followers to fans</b><b>invite followers to your mailing list</b><b>sell to your followers</b></span></span>
+    </div>
+    <p class="sub">Every weekend gig is experience. Every Berklee classmate is a future colleague. Every dollar you tracked last semester is a habit forming. We start there.</p>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="slide-number">05</div>
+    <div class="eyebrow">Idea 4</div>
+    <div class="two-line">
+      <h1 class="headline">Rejection is not failure.</h1>
+      <h1 class="headline quiet">It is the <span class="accent">data</span>.</h1>
+    </div>
+    <p class="sub">The audition that did not call back, the email that got no reply, the application that ghosted. You learn the room. You adjust. You send the next one faster. The people who make it are not the ones who get fewer no's.<span class="aside">(They are the ones who keep going after them.)</span></p>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="slide-number">06</div>
+    <div class="eyebrow">Idea 5</div>
+    <h1 class="headline">Money is a <span class="accent">habit</span>, not a number.</h1>
+    <p class="sub">Six figures with no system is a slow leak. Thirty-eight hundred a month with a system is freedom. We will build the system this semester. Spreadsheets, yes, but also the small daily moves that make the spreadsheet possible.</p>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="slide-number">07</div>
+    <div class="eyebrow">Idea 6</div>
+    <h1 class="headline">Boston is your <span class="accent">network</span>. Start now.</h1>
+    <p class="sub">The room you are sitting in is the highest concentration of future industry people you will ever be in for free. Walk down the hall. Get coffee with the person next to you. The career that starts in May starts with the people you met in January.</p>
+  </section>
+
+  <!-- 8: The 12 big topics -->
+  <section class="slide big-topics-slide">
+    <div class="slide-number">08</div>
+    <div class="eyebrow">The territory we will cover</div>
+    <h1 class="headline" style="font-size: clamp(1.6rem, 2.6vw, 2.4rem);">12 big topics. One summer.</h1>
+    <div class="big-topics">
+      <div class="big-topic">
+        <span class="big-num">01</span>
+        <span class="big-name">Showing Up Like a Pro</span>
+      </div>
+      <div class="big-topic t-serif t-italic t-khaki">
+        <span class="big-num">02</span>
+        <span class="big-name">Goals That Actually Work</span>
+      </div>
+      <div class="big-topic t-blue t-num-blue">
+        <span class="big-num">03</span>
+        <span class="big-name">Emails That Get Answered</span>
+      </div>
+      <div class="big-topic t-bold">
+        <span class="big-num">04</span>
+        <span class="big-name">Finding Real Gigs</span>
+      </div>
+      <div class="big-topic t-serif t-italic">
+        <span class="big-num">05</span>
+        <span class="big-name">Your Artist Identity</span>
+      </div>
+      <div class="big-topic t-sage t-num-sage">
+        <span class="big-num">06</span>
+        <span class="big-name">Networking</span>
+      </div>
+      <div class="big-topic t-num-ink">
+        <span class="big-num">07</span>
+        <span class="big-name">Website &amp; Press Kit</span>
+      </div>
+      <div class="big-topic t-serif">
+        <span class="big-num">08</span>
+        <span class="big-name">Ethics &amp; Bouncing Back</span>
+      </div>
+      <div class="big-topic t-blue t-num-blue t-bold">
+        <span class="big-num">09</span>
+        <span class="big-name">Becoming the Go-To</span>
+      </div>
+      <div class="big-topic t-khaki">
+        <span class="big-num">10</span>
+        <span class="big-name">Career Longevity</span>
+      </div>
+      <div class="big-topic t-serif t-italic t-sage">
+        <span class="big-num">11</span>
+        <span class="big-name">Money &amp; Taxes</span>
+      </div>
+      <div class="big-topic t-num-ink t-bold">
+        <span class="big-num">12</span>
+        <span class="big-name">The Game Plan</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="slide-number">09</div>
+    <div class="eyebrow">What we will do together</div>
+    <ul class="activity-list">
+      <li>Track real numbers.<span class="aside">(Your money. Your hours. Your no's.)</span></li>
+      <li>Rehearse hard conversations, before they are real.</li>
+      <li>Write the email, send the email, follow up on the email.</li>
+      <li>Talk about your gigs, your taxes, your fear, your wins.</li>
+      <li>Show up small, every week, until small becomes a career.</li>
+    </ul>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <div class="slide-number">10</div>
+    <div class="eyebrow">A promise</div>
+    <h1 class="headline">By August, you will <span class="accent">surprise</span> yourself.</h1>
+    <p class="sub">I have watched it happen every semester. The student who could not say their rate in May is negotiating in July. The one who avoided their bank account is tracking it daily. It will happen to you too.<span class="aside">(Trust me on this one.)</span></p>
+    <div class="closing-name">
+      see you in class
+      <strong>Prof. Kramer Gibson, Berklee College of Music</strong>
+    </div>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide contact-slide">
+    <div class="slide-number">11</div>
+    <div class="eyebrow">Stay in touch</div>
+    <div class="contact-name" aria-label="George Kramer Gibson">
+      <span class="given">George</span>
+      <span class="middle">Kramer</span>
+      <span class="family">Gibson</span>
+    </div>
+    <div class="contact-email">ggibson1@berklee.edu</div>
+    <div class="contact-ig-row">
+      <div class="contact-ig">
+        <div class="ig-handle">@seugeorge</div>
+        <small>Instagram</small>
+      </div>
+      <img class="contact-qr" src="qr_seugeorge_instagram.png" alt="Scan this QR code to open @seugeorge on Instagram" />
+    </div>
+    <p class="contact-note">"@seugeorge" is a tribute to <em>Seu Jorge</em>, the Brazilian musician whose Portuguese covers of David Bowie songs helped me learn Portuguese.</p>
+  </section>
+
+</div>
+
+<nav class="controls" aria-label="Slide controls">
+  <button class="ctrl" id="prev" aria-label="Previous slide">&larr;</button>
+  <span class="counter"><span id="curr">1</span> / <span id="total">10</span></span>
+  <button class="ctrl" id="next" aria-label="Next slide">&rarr;</button>
+</nav>
+
+<div class="dots" id="dots" aria-hidden="true"></div>
+
+<div class="hint">arrow keys / space</div>
+<div class="attribution">Prof. Kramer Gibson, Berklee College of Music</div>
+
+<script>
+(function () {
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  const dotsWrap = document.getElementById('dots');
+  const curr = document.getElementById('curr');
+  const total = document.getElementById('total');
+  const prevBtn = document.getElementById('prev');
+  const nextBtn = document.getElementById('next');
+
+  let i = 0;
+  total.textContent = slides.length;
+
+  slides.forEach((_, idx) => {
+    const d = document.createElement('div');
+    d.className = 'dot' + (idx === 0 ? ' active' : '');
+    d.addEventListener('click', () => go(idx));
+    dotsWrap.appendChild(d);
+  });
+  const dots = Array.from(dotsWrap.children);
+
+  function go(n) {
+    if (n < 0 || n >= slides.length) return;
+    slides[i].classList.remove('active');
+    dots[i].classList.remove('active');
+    i = n;
+    slides[i].classList.add('active');
+    dots[i].classList.add('active');
+    curr.textContent = i + 1;
+  }
+
+  function next() { go(Math.min(i + 1, slides.length - 1)); }
+  function prev() { go(Math.max(i - 1, 0)); }
+
+  nextBtn.addEventListener('click', next);
+  prevBtn.addEventListener('click', prev);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      next();
+    } else if (e.key === 'ArrowLeft' || e.key === 'PageUp') {
+      e.preventDefault();
+      prev();
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      go(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      go(slides.length - 1);
+    } else if (e.key === 'f' || e.key === 'F') {
+      const el = document.documentElement;
+      if (!document.fullscreenElement) el.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+  });
+
+  // Touch swipe
+  let touchStartX = null;
+  document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; }, { passive: true });
+  document.addEventListener('touchend', (e) => {
+    if (touchStartX === null) return;
+    const dx = e.changedTouches[0].clientX - touchStartX;
+    if (Math.abs(dx) > 50) (dx < 0 ? next : prev)();
+    touchStartX = null;
+  }, { passive: true });
+
+  // Tiny-habits toggle on slide 2.
+  const habitToggle = document.getElementById('habitToggle');
+  const habitList = document.getElementById('habitList');
+  if (habitToggle && habitList) {
+    habitToggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const shown = habitList.classList.toggle('show');
+      habitToggle.setAttribute('aria-expanded', String(shown));
+      habitToggle.textContent = shown ? 'Hide tiny habits' : 'Show tiny habits';
+    });
+  }
+
+  // Build the habit-loop ring: N cells around a circle, ticking one at a
+  // time. Cells fill clockwise; once full, all reset and the loop restarts.
+  // Three color phases - khaki / sage / blue - rotate per full loop so the
+  // ring reads as "weeks compounding into months."
+  const ring = document.getElementById('habitRing');
+  const loop = document.getElementById('habitLoop');
+  const pauseBtn = document.getElementById('pauseLoop');
+  const N = 24;
+  const colors = ['', 'sage', 'blue'];
+  if (ring) {
+    ring.style.setProperty('--n', N);
+    for (let k = 0; k < N; k++) {
+      const cell = document.createElement('div');
+      cell.className = 'habit-cell';
+      cell.style.setProperty('--i', k);
+      ring.appendChild(cell);
+    }
+    const cells = Array.from(ring.children);
+    let tick = 0;
+    let phase = 0;
+    let paused = false;
+    function step() {
+      if (paused) return;
+      if (tick === 0) {
+        cells.forEach(c => c.classList.remove('filled', 'sage', 'blue'));
+      }
+      const color = colors[phase % colors.length];
+      cells[tick].classList.add('filled');
+      if (color) cells[tick].classList.add(color);
+      tick++;
+      if (tick >= N) { tick = 0; phase++; }
+    }
+    setInterval(step, 220);
+    if (pauseBtn) {
+      pauseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        paused = !paused;
+        loop.classList.toggle('paused', paused);
+        pauseBtn.setAttribute('aria-pressed', String(paused));
+        pauseBtn.textContent = paused ? '▶ Play' : '⏸ Pause';
+      });
+    }
+  }
+
+  // Word cloud: hover a word, scatter the siblings, float in the phrases.
+  // Scatter distance is computed from the focused word's position so each
+  // sibling drifts outward along the line from the focus through itself.
+  const cloud = document.querySelector('.word-cloud');
+  if (cloud) {
+    const cloudSlide = cloud.closest('.slide');
+    const words = Array.from(cloud.querySelectorAll(':scope > span'));
+
+    function focusWord(focused) {
+      const fRect = focused.getBoundingClientRect();
+      const fCx = fRect.left + fRect.width / 2;
+      const fCy = fRect.top + fRect.height / 2;
+
+      cloud.classList.add('zoomed');
+      if (cloudSlide) cloudSlide.classList.add('cloud-zoomed');
+
+      words.forEach(w => {
+        const isFocused = w === focused;
+        w.classList.toggle('is-focus', isFocused);
+        if (isFocused) {
+          w.style.transform = '';
+          return;
+        }
+        const r = w.getBoundingClientRect();
+        const cx = r.left + r.width / 2;
+        const cy = r.top + r.height / 2;
+        const dx = cx - fCx;
+        const dy = cy - fCy;
+        const dist = Math.hypot(dx, dy) || 1;
+        const tx = (dx / dist) * 340;
+        const ty = (dy / dist) * 200;
+        w.style.transform = `translate(${tx}px, ${ty}px)`;
+      });
+    }
+
+    function resetCloud() {
+      cloud.classList.remove('zoomed');
+      if (cloudSlide) cloudSlide.classList.remove('cloud-zoomed');
+      words.forEach(w => {
+        w.classList.remove('is-focus');
+        w.style.transform = '';
+      });
+    }
+
+    words.forEach(word => {
+      word.addEventListener('mouseenter', () => focusWord(word));
+      word.addEventListener('focus', () => focusWord(word));
+    });
+
+    cloud.addEventListener('mouseleave', resetCloud);
+    cloud.addEventListener('focusout', (e) => {
+      if (!cloud.contains(e.relatedTarget)) resetCloud();
+    });
+  }
+
+})();
+</script>
+
+</body>
+</html>
