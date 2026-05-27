@@ -39,6 +39,18 @@
     .container { max-width: 700px; margin: 0 auto; padding: 56px 24px 80px; }
     .hub-title { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
     .hub-subtitle { color: var(--mid); font-size: 0.95rem; margin-bottom: 36px; }
+    .section { margin-bottom: 44px; }
+    .section:last-child { margin-bottom: 0; }
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--ink);
+    }
+    .section-title { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink); }
+    .section-note { font-size: 0.8rem; color: var(--mid); }
     .tool-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
     .tool-list a {
       display: block;
@@ -88,41 +100,62 @@
   </div>
 
   <main class="container">
-    <h2 class="hub-title">Course Tools</h2>
+    <h2 class="hub-title">LHUM400 Resources</h2>
     <p class="hub-subtitle">Self-paced resources for LHUM400. More will appear here as the semester unfolds.</p>
 
-    <ul class="tool-list">
-      <li>
-        <a href="syllabus-summer-2026.pdf">
-          <div class="tool-title">Course Syllabus (Summer 2026)</div>
-          <div class="tool-desc">The full syllabus PDF: course description, grading, attendance and late policies, and the 12-week schedule.</div>
-        </a>
-      </li>
-      <li>
-        <a href="readiness-audit/">
-          <div class="tool-title">Take the Real-World Readiness Audit</div>
-          <div class="tool-desc">A short self-scoring survey with a printable PDF report and follow-up resources.</div>
-        </a>
-      </li>
-      <li>
-        <a href="resume-builder.html">
-          <div class="tool-title">Resume Builder</div>
-          <div class="tool-desc">Fill in your contact info, experience, education, and skills. Export as Markdown or PDF. Drafts save in your browser.</div>
-        </a>
-      </li>
-      <li>
-        <a href="resume-rubric.html">
-          <div class="tool-title">Interactive Resume Rubric</div>
-          <div class="tool-desc">Use this rubric to evaluate your resume.</div>
-        </a>
-      </li>
-      <li>
-        <a href="https://www.khanacademy.org/college-careers-more/financial-literacy/xa6995ea67a8e9fdd:taxes-and-tax-forms" target="_blank" rel="noopener">
-          <div class="tool-title">Learn the Tax Basics: Khan Academy Financial Literacy</div>
-          <div class="tool-desc">Free, self-paced taxes unit from Khan Academy. Short videos, articles, and practice exercises covering what taxes are, how income is taxed, and the forms you will actually see as a working musician: W-2 for employee gigs, 1099 for freelance and gig income, 1098 for tuition. Nonprofit, no account required, no advertising.</div>
-        </a>
-      </li>
-    </ul>
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">Week One</div>
+        <div class="section-note">Start here</div>
+      </div>
+      <ul class="tool-list">
+        <li>
+          <a href="syllabus-summer-2026.pdf">
+            <div class="tool-title">Course Syllabus (Summer 2026)</div>
+            <div class="tool-desc">The full syllabus PDF: course description, grading, attendance and late policies, and the 12-week schedule.</div>
+          </a>
+        </li>
+        <li>
+          <a href="readiness-audit/">
+            <div class="tool-title">Real-World Readiness Audit</div>
+            <div class="tool-desc">A short self-scoring survey with a printable PDF report and follow-up resources. Take it during Week One so you know where you stand.</div>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <div class="section-header">
+        <div class="section-title">Tools</div>
+        <div class="section-note">Use any time during the semester</div>
+      </div>
+      <ul class="tool-list">
+        <li>
+          <a href="cabinet/">
+            <div class="tool-title">Stuff to Track</div>
+            <div class="tool-desc">A workshop cabinet for the things you can't drop: events, bills, ideas, projects. Hover a folder to peek, click to expand. Edit, color, drag-reorder, and export to PDF. Saves automatically to your browser.</div>
+          </a>
+        </li>
+        <li>
+          <a href="resume-builder.html">
+            <div class="tool-title">Resume Builder</div>
+            <div class="tool-desc">Fill in your contact info, experience, education, and skills. Export as Markdown or PDF. Drafts save in your browser.</div>
+          </a>
+        </li>
+        <li>
+          <a href="resume-rubric.html">
+            <div class="tool-title">Interactive Resume Rubric</div>
+            <div class="tool-desc">Use this rubric to evaluate your resume.</div>
+          </a>
+        </li>
+        <li>
+          <a href="https://www.khanacademy.org/college-careers-more/financial-literacy/xa6995ea67a8e9fdd:taxes-and-tax-forms" target="_blank" rel="noopener">
+            <div class="tool-title">Tax Basics &middot; Khan Academy Financial Literacy</div>
+            <div class="tool-desc">Free, self-paced taxes unit from Khan Academy. Short videos, articles, and practice exercises covering what taxes are, how income is taxed, and the forms you will actually see as a working musician: W-2 for employee gigs, 1099 for freelance and gig income, 1098 for tuition. Nonprofit, no account required, no advertising.</div>
+          </a>
+        </li>
+      </ul>
+    </section>
   </main>
 
   <footer>Prof. Kramer Gibson, Berklee College of Music</footer>
