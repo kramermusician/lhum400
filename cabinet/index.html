@@ -74,6 +74,77 @@
     margin: 0 auto;
   }
 
+  /* Workbench bar (file-tabs for switching saved cabinets) */
+  .workbench-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .wb-pill {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(246,241,231,0.08);
+    border: 1px solid rgba(246,241,231,0.18);
+    border-radius: 6px 6px 0 0;
+    overflow: hidden;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .wb-pill.active {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .wb-name {
+    background: transparent;
+    border: none;
+    color: rgba(246,241,231,0.72);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 6px 8px 13px;
+    cursor: pointer;
+    max-width: 220px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .wb-name:hover { color: var(--paper); }
+  .wb-pill.active .wb-name { color: #fff; cursor: text; }
+  .wb-delete {
+    background: transparent;
+    border: none;
+    color: rgba(246,241,231,0.35);
+    font-size: 16px;
+    font-weight: 900;
+    line-height: 1;
+    padding: 2px 11px 2px 5px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    font-family: inherit;
+  }
+  .wb-pill:hover .wb-delete, .wb-pill.active .wb-delete { opacity: 1; }
+  .wb-pill.active .wb-delete { color: rgba(255,255,255,0.65); }
+  .wb-delete:hover { color: #fff; }
+  .wb-add {
+    background: transparent;
+    border: 1px dashed rgba(246,241,231,0.3);
+    border-radius: 6px;
+    color: rgba(246,241,231,0.6);
+    font-family: inherit;
+    font-weight: 800;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s;
+  }
+  .wb-add:hover { color: var(--paper); border-color: var(--paper); }
+
   /* Cabinet */
   .cabinet {
     position: relative;
@@ -709,10 +780,12 @@
 
 <header>
   <h1>Stuff to <span class="hl">Track</span></h1>
-  <p>A workshop cabinet for the things you can't drop. Hover a folder to open it. <strong>Hover a drawer and press <kbd>X</kbd> to delete it.</strong> Edit, add, or delete items inside. Your changes save to this browser.</p>
+  <p>A workshop cabinet for the things you can't drop. Hover a folder to open it. <strong>Hover a drawer and press <kbd>X</kbd> to delete it.</strong> Keep separate cabinets as <strong>workbenches</strong> and switch between them up top. Your changes save to this browser.</p>
 </header>
 
 <main>
+  <div class="workbench-bar" id="workbench-bar"></div>
+
   <div class="cabinet" id="cabinet"></div>
 
   <div class="controls">
@@ -730,6 +803,7 @@
       <li>Click <strong>Edit</strong> on a folder to change its label, items, width, or color</li>
       <li>Grab the <strong>Move</strong> handle (top-left) and drag a drawer to reorder it. An orange bar shows where it will snap in.</li>
       <li>Hover a folder and press <kbd>X</kbd> to delete the whole drawer</li>
+      <li><strong>Workbenches</strong> are saved sets of drawers. Use the tabs at the top to switch between them, click <strong>+ New workbench</strong> to start a fresh set, click the active tab to rename it, or the <strong>×</strong> on a tab to delete it</li>
       <li>All changes save automatically to your browser. Nothing leaves your device.</li>
     </ul>
   </details>
@@ -800,7 +874,8 @@
 </section>
 
 <script>
-  const STORAGE_KEY = 'stuff-to-track-v1';
+  const STORAGE_KEY = 'stuff-to-track-v2';
+  const LEGACY_KEY = 'stuff-to-track-v1';
 
   const DEFAULTS = [
     { id: 'events', label: 'Upcoming Events', items: ['Concert Friday', 'Birthday party', 'Doctor visit'], width: 3, color: 'default' },
@@ -808,32 +883,160 @@
     { id: 'art', label: 'Art Ideas', items: ['Stop motion video', 'Painting series', 'Sketchbook page'], width: 3, color: 'default' },
   ];
 
-  let drawers = load();
+  function clone(x) { return JSON.parse(JSON.stringify(x)); }
+  function uid() { return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function wid() { return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  function newWorkbench(name, drawerList) {
+    return { id: wid(), name: name || 'Untitled Workbench', drawers: drawerList || clone(DEFAULTS) };
+  }
 
-  function load() {
+  // state = { activeId, workbenches: [ { id, name, drawers: [...] } ] }
+  let state = loadState();
+  let drawers = activeWorkbench().drawers; // live reference to the active workbench's drawers
+
+  function activeWorkbench() {
+    return state.workbenches.find(w => w.id === state.activeId) || state.workbenches[0];
+  }
+
+  function loadState() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return clone(DEFAULTS);
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length) return parsed;
-      return clone(DEFAULTS);
-    } catch {
-      return clone(DEFAULTS);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.workbenches) && parsed.workbenches.length) {
+          if (!parsed.workbenches.some(w => w.id === parsed.activeId)) {
+            parsed.activeId = parsed.workbenches[0].id;
+          }
+          return parsed;
+        }
+      }
+      // Migrate a single-cabinet save from the pre-workbench version
+      const legacy = localStorage.getItem(LEGACY_KEY);
+      if (legacy) {
+        const ld = JSON.parse(legacy);
+        if (Array.isArray(ld) && ld.length) {
+          const wb = newWorkbench('My Workbench', ld);
+          return { activeId: wb.id, workbenches: [wb] };
+        }
+      }
+    } catch (e) {
+      console.warn('Could not load state', e);
     }
+    const wb = newWorkbench('My Workbench', clone(DEFAULTS));
+    return { activeId: wb.id, workbenches: [wb] };
   }
 
   function save() {
+    const wb = activeWorkbench();
+    if (wb) wb.drawers = drawers; // re-sync after any reassignment of `drawers`
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(drawers));
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
       console.warn('Could not save to localStorage', e);
     }
   }
 
-  function clone(x) { return JSON.parse(JSON.stringify(x)); }
-  function uid() { return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
-
   const cabinet = document.getElementById('cabinet');
+  const workbenchBar = document.getElementById('workbench-bar');
+
+  function renderWorkbenches() {
+    workbenchBar.innerHTML = '';
+    state.workbenches.forEach(w => {
+      const pill = document.createElement('div');
+      pill.className = 'wb-pill' + (w.id === state.activeId ? ' active' : '');
+      pill.dataset.id = w.id;
+
+      const name = document.createElement('button');
+      name.type = 'button';
+      name.className = 'wb-name';
+      name.textContent = w.name;
+      name.title = w.id === state.activeId ? 'Click to rename this workbench' : 'Click to switch to this workbench';
+      name.addEventListener('click', () => {
+        if (w.id === state.activeId) renameWorkbench(w.id);
+        else switchWorkbench(w.id);
+      });
+
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'wb-delete';
+      del.textContent = '×';
+      del.title = 'Delete this workbench';
+      del.setAttribute('aria-label', `Delete workbench ${w.name}`);
+      del.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteWorkbench(w.id);
+      });
+
+      pill.appendChild(name);
+      pill.appendChild(del);
+      workbenchBar.appendChild(pill);
+    });
+
+    const add = document.createElement('button');
+    add.type = 'button';
+    add.className = 'wb-add';
+    add.textContent = '+ New workbench';
+    add.title = 'Save the current set and start a fresh workbench';
+    add.addEventListener('click', createWorkbench);
+    workbenchBar.appendChild(add);
+  }
+
+  function switchWorkbench(id) {
+    if (id === state.activeId) return;
+    const wb = state.workbenches.find(w => w.id === id);
+    if (!wb) return;
+    closeFocus();
+    state.activeId = id;
+    drawers = wb.drawers;
+    save();
+    renderWorkbenches();
+    render();
+  }
+
+  function createWorkbench() {
+    const raw = prompt('Name your new workbench', 'Workbench ' + (state.workbenches.length + 1));
+    if (raw === null) return;
+    const name = raw.trim() || 'Untitled Workbench';
+    const wb = newWorkbench(name, clone(DEFAULTS));
+    state.workbenches.push(wb);
+    state.activeId = wb.id;
+    drawers = wb.drawers;
+    save();
+    renderWorkbenches();
+    render();
+  }
+
+  function renameWorkbench(id) {
+    const wb = state.workbenches.find(w => w.id === id);
+    if (!wb) return;
+    const raw = prompt('Rename workbench', wb.name);
+    if (raw === null) return;
+    const name = raw.trim();
+    if (!name) return;
+    wb.name = name;
+    save();
+    renderWorkbenches();
+  }
+
+  function deleteWorkbench(id) {
+    if (state.workbenches.length <= 1) {
+      alert('This is your only workbench. Create another one before deleting this.');
+      return;
+    }
+    const wb = state.workbenches.find(w => w.id === id);
+    if (!wb) return;
+    if (!confirm(`Delete the workbench "${wb.name}"? Its drawers will be lost.`)) return;
+    const idx = state.workbenches.findIndex(w => w.id === id);
+    state.workbenches = state.workbenches.filter(w => w.id !== id);
+    if (state.activeId === id) {
+      const next = state.workbenches[Math.max(0, idx - 1)];
+      state.activeId = next.id;
+      drawers = next.drawers;
+    }
+    save();
+    renderWorkbenches();
+    render();
+  }
 
   function render() {
     cabinet.innerHTML = '';
@@ -1338,6 +1541,8 @@
   function renderPrintView() {
     const grid = document.querySelector('#print-view .print-grid');
     const meta = document.querySelector('#print-view .print-meta');
+    const h1 = document.querySelector('#print-view .print-header h1');
+    if (h1) h1.textContent = activeWorkbench().name;
     grid.innerHTML = '';
     drawers.forEach(d => {
       const card = document.createElement('div');
@@ -1368,7 +1573,7 @@
   window.addEventListener('beforeprint', renderPrintView);
 
   document.getElementById('reset').addEventListener('click', () => {
-    if (confirm('Reset all drawers to the defaults? Your custom drawers will be lost.')) {
+    if (confirm('Reset this workbench to the default drawers? Your custom drawers in this workbench will be lost.')) {
       drawers = clone(DEFAULTS);
       save();
       render();
@@ -1393,6 +1598,7 @@
     }
   });
 
+  renderWorkbenches();
   render();
 </script>
 </body>
