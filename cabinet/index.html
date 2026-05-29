@@ -145,6 +145,103 @@
   }
   .wb-add:hover { color: var(--paper); border-color: var(--paper); }
 
+  /* Per-item note button */
+  .page-note {
+    background: transparent;
+    border: none;
+    color: rgba(0,0,0,0.32);
+    cursor: pointer;
+    font-size: 13px;
+    line-height: 1;
+    padding: 0 3px;
+    opacity: 0;
+    transition: opacity 0.15s, color 0.15s;
+    flex-shrink: 0;
+    font-family: inherit;
+  }
+  .page:hover .page-note { opacity: 0.7; }
+  .page-note:hover { opacity: 1 !important; color: var(--accent2); }
+  .page-note.has-note { opacity: 1; color: var(--accent2); }
+
+  /* Note bottom sheet (half-screen) */
+  .note-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    z-index: 6000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    animation: focusFadeIn 0.18s ease;
+  }
+  .note-overlay[hidden] { display: none !important; }
+  .note-sheet {
+    background: linear-gradient(180deg, #f9f4ea 0%, #ebe2cf 100%);
+    color: var(--ink);
+    border-top: 4px solid #1a0e06;
+    border-radius: 12px 12px 0 0;
+    width: 100%;
+    max-width: 680px;
+    height: 50vh;
+    min-height: 280px;
+    padding: 22px 24px 24px;
+    position: relative;
+    box-shadow: 0 -20px 60px rgba(0,0,0,0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: noteSlideUp 0.22s cubic-bezier(0.25, 1, 0.3, 1);
+  }
+  @keyframes noteSlideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  .note-close {
+    position: absolute;
+    top: 10px;
+    right: 14px;
+    background: rgba(0,0,0,0.4);
+    color: #f6f1e7;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 22px;
+    cursor: pointer;
+    line-height: 1;
+    font-family: inherit;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .note-close:hover { background: rgba(0,0,0,0.7); }
+  .note-item-label {
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    color: var(--ink);
+    padding-right: 44px;
+    line-height: 1.2;
+  }
+  .note-status {
+    font-size: 10px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(15,17,21,0.45);
+  }
+  .note-textarea {
+    flex: 1;
+    width: 100%;
+    resize: none;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 6px;
+    padding: 14px 16px;
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .note-textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+
   /* Cabinet */
   .cabinet {
     position: relative;
@@ -763,6 +860,14 @@
       margin-top: 2px;
     }
     .print-card li { margin-bottom: 1px; }
+    .print-note {
+      font-size: 10px;
+      color: #555;
+      line-height: 1.4;
+      margin: 1px 0 4px;
+      padding-left: 2px;
+      white-space: pre-wrap;
+    }
     .print-footer {
       margin-top: 26px;
       padding-top: 10px;
@@ -800,6 +905,7 @@
       <li><strong>Hover</strong> a folder to peek at it · <strong>click</strong> the folder label to expand it full-size</li>
       <li>Click <strong>+ Add item</strong> at the bottom of an open folder to add a new one</li>
       <li><strong>Double-click</strong> an item to rename it · click the <strong>×</strong> next to it to delete</li>
+      <li>Click the <strong>✎</strong> on an item to open a note for it. Write as much as you want; it saves automatically. A filled <strong>✎</strong> means that item has a note.</li>
       <li>Click <strong>Edit</strong> on a folder to change its label, items, width, or color</li>
       <li>Grab the <strong>Move</strong> handle (top-left) and drag a drawer to reorder it. An orange bar shows where it will snap in.</li>
       <li>Hover a folder and press <kbd>X</kbd> to delete the whole drawer</li>
@@ -864,6 +970,15 @@
   </div>
 </div>
 
+<div id="note-view" class="note-overlay" hidden>
+  <div class="note-sheet">
+    <button id="note-close" class="note-close" type="button" title="Close" aria-label="Close note">&times;</button>
+    <div id="note-item-label" class="note-item-label"></div>
+    <div id="note-status" class="note-status">Saved automatically</div>
+    <textarea id="note-text" class="note-textarea" placeholder="Write a note for this item. It saves automatically."></textarea>
+  </div>
+</div>
+
 <section id="print-view" aria-hidden="true">
   <div class="print-header">
     <h1>Stuff to Track</h1>
@@ -886,12 +1001,22 @@
   function clone(x) { return JSON.parse(JSON.stringify(x)); }
   function uid() { return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function wid() { return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+  // Items are stored as { text, note }. Older saves used plain strings; normalize on the way in.
+  function normalizeItem(it) {
+    if (typeof it === 'string') return { text: it, note: '' };
+    return { text: it.text || '', note: typeof it.note === 'string' ? it.note : '' };
+  }
+  function normalizeDrawers(list) {
+    (list || []).forEach(d => { d.items = (d.items || []).map(normalizeItem); });
+    return list;
+  }
   function newWorkbench(name, drawerList) {
-    return { id: wid(), name: name || 'Untitled Workbench', drawers: drawerList || clone(DEFAULTS) };
+    return { id: wid(), name: name || 'Untitled Workbench', drawers: normalizeDrawers(drawerList || clone(DEFAULTS)) };
   }
 
   // state = { activeId, workbenches: [ { id, name, drawers: [...] } ] }
   let state = loadState();
+  state.workbenches.forEach(w => normalizeDrawers(w.drawers));
   let drawers = activeWorkbench().drawers; // live reference to the active workbench's drawers
 
   function activeWorkbench() {
@@ -1038,6 +1163,22 @@
     render();
   }
 
+  function makeNoteBtn(drawerId, idx) {
+    const drawer = drawers.find(x => x.id === drawerId);
+    const item = drawer && drawer.items[idx];
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'page-note' + (item && item.note ? ' has-note' : '');
+    btn.textContent = '✎';
+    btn.title = item && item.note ? 'Edit note' : 'Add a note';
+    btn.setAttribute('aria-label', 'Note');
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openNote(drawerId, idx);
+    });
+    return btn;
+  }
+
   function render() {
     cabinet.innerHTML = '';
     drawers.forEach(d => {
@@ -1055,19 +1196,21 @@
 
         const text = document.createElement('span');
         text.className = 'page-text';
-        text.textContent = item;
+        text.textContent = item.text;
         text.title = 'Double-click to edit';
         text.addEventListener('dblclick', (e) => {
           e.stopPropagation();
           beginItemEdit(el, d.id, idx, text);
         });
 
+        const noteBtn = makeNoteBtn(d.id, idx);
+
         const xBtn = document.createElement('button');
         xBtn.type = 'button';
         xBtn.className = 'page-delete';
         xBtn.textContent = '×';
         xBtn.title = 'Delete this item';
-        xBtn.setAttribute('aria-label', `Delete ${item}`);
+        xBtn.setAttribute('aria-label', `Delete ${item.text}`);
         xBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           const drawer = drawers.find(x => x.id === d.id);
@@ -1078,6 +1221,7 @@
         });
 
         page.appendChild(text);
+        page.appendChild(noteBtn);
         page.appendChild(xBtn);
         folder.appendChild(page);
       });
@@ -1288,7 +1432,7 @@
     editingId = id;
     editTitle.textContent = 'Edit Drawer';
     form.label.value = d.label;
-    form.items.value = d.items.join('\n');
+    form.items.value = d.items.map(it => it.text).join('\n');
     form.width.value = String(d.width || 1);
     setSelectedColor(d.color || 'default');
     deleteBtn.hidden = false;
@@ -1316,7 +1460,7 @@
         const val = input.value.trim();
         const drawer = drawers.find(x => x.id === drawerId);
         if (drawer && val) {
-          drawer.items[idx] = val;
+          drawer.items[idx].text = val;
           save();
         }
       }
@@ -1349,7 +1493,7 @@
         const val = input.value.trim();
         const drawer = drawers.find(x => x.id === drawerId);
         if (drawer && val) {
-          drawer.items.push(val);
+          drawer.items.push({ text: val, note: '' });
           save();
         }
       }
@@ -1377,9 +1521,18 @@
   form.addEventListener('submit', (e) => {
     e.preventDefault();
     const label = form.label.value.trim();
-    const items = form.items.value.split('\n').map(s => s.trim()).filter(Boolean);
+    const lines = form.items.value.split('\n').map(s => s.trim()).filter(Boolean);
     const width = parseInt(form.width.value, 10) || 1;
-    if (!label || items.length === 0) return;
+    if (!label || lines.length === 0) return;
+
+    // Preserve notes: match each new line to an existing item with the same text.
+    const existing = editingId ? ((drawers.find(x => x.id === editingId) || {}).items || []) : [];
+    const pool = existing.map(it => ({ text: it.text, note: it.note }));
+    const items = lines.map(line => {
+      const hit = pool.findIndex(p => p.text === line);
+      if (hit !== -1) { const [m] = pool.splice(hit, 1); return { text: line, note: m.note || '' }; }
+      return { text: line, note: '' };
+    });
 
     if (editingId) {
       const d = drawers.find(x => x.id === editingId);
@@ -1435,12 +1588,13 @@
       page.className = 'page';
       const text = document.createElement('span');
       text.className = 'page-text';
-      text.textContent = item;
+      text.textContent = item.text;
       text.title = 'Double-click to edit';
       text.addEventListener('dblclick', (e) => {
         e.stopPropagation();
         beginFocusItemEdit(d.id, idx, text);
       });
+      const noteBtn = makeNoteBtn(d.id, idx);
       const xBtn = document.createElement('button');
       xBtn.type = 'button';
       xBtn.className = 'page-delete';
@@ -1456,6 +1610,7 @@
         renderFocus();
       });
       page.appendChild(text);
+      page.appendChild(noteBtn);
       page.appendChild(xBtn);
       itemsEl.appendChild(page);
     });
@@ -1486,7 +1641,7 @@
         const val = input.value.trim();
         const drawer = drawers.find(x => x.id === drawerId);
         if (drawer && val) {
-          drawer.items[idx] = val;
+          drawer.items[idx].text = val;
           save();
           render();
         }
@@ -1518,7 +1673,7 @@
         const val = input.value.trim();
         const drawer = drawers.find(x => x.id === drawerId);
         if (drawer && val) {
-          drawer.items.push(val);
+          drawer.items.push({ text: val, note: '' });
           save();
           render();
         }
@@ -1537,6 +1692,60 @@
     if (e.target === focusView) closeFocus();
   });
 
+  // Item note editor (auto-saving bottom sheet)
+  const noteView = document.getElementById('note-view');
+  const noteCloseBtn = document.getElementById('note-close');
+  const noteText = document.getElementById('note-text');
+  const noteItemLabel = document.getElementById('note-item-label');
+  const noteStatus = document.getElementById('note-status');
+  let noteCtx = null;
+  let noteSaveTimer = null;
+
+  function currentNoteItem() {
+    if (!noteCtx) return null;
+    const drawer = drawers.find(x => x.id === noteCtx.drawerId);
+    return drawer ? (drawer.items[noteCtx.idx] || null) : null;
+  }
+
+  function openNote(drawerId, idx) {
+    const drawer = drawers.find(x => x.id === drawerId);
+    if (!drawer || !drawer.items[idx]) return;
+    noteCtx = { drawerId, idx };
+    noteItemLabel.textContent = drawer.items[idx].text;
+    noteText.value = drawer.items[idx].note || '';
+    noteStatus.textContent = 'Saved automatically';
+    noteView.hidden = false;
+    noteText.focus();
+  }
+
+  function closeNote() {
+    if (noteSaveTimer) { clearTimeout(noteSaveTimer); noteSaveTimer = null; }
+    const item = currentNoteItem();
+    if (item) { item.note = noteText.value; save(); }
+    noteCtx = null;
+    noteView.hidden = true;
+    render();
+    if (focusedId) renderFocus();
+  }
+
+  noteText.addEventListener('input', () => {
+    const item = currentNoteItem();
+    if (!item) return;
+    item.note = noteText.value;
+    noteStatus.textContent = 'Saving…';
+    if (noteSaveTimer) clearTimeout(noteSaveTimer);
+    noteSaveTimer = setTimeout(() => {
+      save();
+      noteStatus.textContent = 'Saved automatically';
+      noteSaveTimer = null;
+    }, 300);
+  });
+
+  noteCloseBtn.addEventListener('click', closeNote);
+  noteView.addEventListener('click', (e) => {
+    if (e.target === noteView) closeNote();
+  });
+
   // PDF export via browser print dialog
   function renderPrintView() {
     const grid = document.querySelector('#print-view .print-grid');
@@ -1552,7 +1761,13 @@
       const ul = document.createElement('ul');
       d.items.forEach(item => {
         const li = document.createElement('li');
-        li.textContent = item;
+        li.textContent = item.text;
+        if (item.note) {
+          const noteEl = document.createElement('div');
+          noteEl.className = 'print-note';
+          noteEl.textContent = item.note;
+          li.appendChild(noteEl);
+        }
         ul.appendChild(li);
       });
       card.appendChild(h2);
@@ -1574,7 +1789,7 @@
 
   document.getElementById('reset').addEventListener('click', () => {
     if (confirm('Reset this workbench to the default drawers? Your custom drawers in this workbench will be lost.')) {
-      drawers = clone(DEFAULTS);
+      drawers = normalizeDrawers(clone(DEFAULTS));
       save();
       render();
     }
@@ -1582,6 +1797,10 @@
 
   // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
+    if (!noteView.hidden) {
+      if (e.key === 'Escape') { e.preventDefault(); closeNote(); }
+      return;
+    }
     if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT')) return;
     if (modal.open) return;
     if (focusedId) {
