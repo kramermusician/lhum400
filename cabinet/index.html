@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Stuff to Track</title>
+<title>Stuff to Track — LHUM400 Summer 2026</title>
 <style>
   :root {
     --ink: #0f1115;
@@ -13,9 +13,36 @@
     --gold: #e6b325;
     --green: #2f7d4f;
     --muted: #5a5a60;
+    --navy: #1c2b4a;
+    --site-accent: #2d5fa6;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { min-height: 100%; }
+
+  /* LHUM400 site nav */
+  .site-nav {
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 28px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .site-nav-left { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  .site-nav h1 { font-size: 1rem; font-weight: 600; letter-spacing: 0.02em; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  .site-nav span { font-size: 0.8rem; opacity: 0.6; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; }
+  .site-nav-back {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-size: 0.82rem;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    white-space: nowrap;
+    transition: color 0.15s;
+  }
+  .site-nav-back:hover { color: #fff; }
+
   body {
     background:
       radial-gradient(ellipse at top, #1a1d24 0%, #0a0c10 70%),
@@ -795,7 +822,8 @@
     text-transform: uppercase;
     line-height: 1.8;
   }
-  footer a { color: inherit; }
+  footer a { color: rgba(246,241,231,0.5); text-decoration: none; }
+  footer a:hover { color: rgba(246,241,231,0.85); }
 
   @media (max-width: 600px) {
     .cabinet { grid-template-columns: 1fr 1fr; }
@@ -808,7 +836,7 @@
   @media print {
     @page { size: letter; margin: 0.5in; }
     body { background: #fff !important; color: #000 !important; padding: 0; }
-    header, main, footer, dialog { display: none !important; }
+    header, main, footer, dialog, .site-nav { display: none !important; }
     #print-view {
       display: block !important;
       background: #fff;
@@ -882,6 +910,14 @@
 </style>
 </head>
 <body>
+
+<nav class="site-nav">
+  <div class="site-nav-left">
+    <h1>LHUM400 Student Tools</h1>
+    <span>Berklee College of Music · Summer 2026</span>
+  </div>
+  <a class="site-nav-back" href="../">← Course resources</a>
+</nav>
 
 <header>
   <h1>Stuff to <span class="hl">Track</span></h1>
@@ -958,7 +994,8 @@
 
 <footer>
   <div>Have your stuff together.</div>
-  <div>Built by Kramer Gibson · Saved to your browser, not the cloud</div>
+  <div>Saved to your browser — nothing leaves your device.</div>
+  <div style="margin-top:10px;"><a href="../">← Back to course resources</a></div>
 </footer>
 
 <div id="focus-view" class="focus-overlay" hidden>
@@ -993,15 +1030,14 @@
   const LEGACY_KEY = 'stuff-to-track-v1';
 
   const DEFAULTS = [
-    { id: 'events', label: 'Upcoming Events', items: ['Concert Friday', 'Birthday party', 'Doctor visit'], width: 3, color: 'default' },
-    { id: 'bills', label: 'Bills to Pay', items: ['Rent', 'Phone', 'Utilities'], width: 3, color: 'default' },
-    { id: 'art', label: 'Art Ideas', items: ['Stop motion video', 'Painting series', 'Sketchbook page'], width: 3, color: 'default' },
+    { id: 'tasks', label: 'To Do', items: ['Read the syllabus', 'Post on Discussion 1', 'Take Readiness Audit'], width: 3, color: 'orange' },
+    { id: 'career', label: 'Career Goals', items: ['Update resume', 'Research internships', 'Network this week'], width: 3, color: 'teal' },
+    { id: 'ideas', label: 'Ideas & Notes', items: ['Reflection topic idea', 'Quote from class', 'Follow up on...'], width: 3, color: 'plum' },
   ];
 
   function clone(x) { return JSON.parse(JSON.stringify(x)); }
   function uid() { return 'd' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
   function wid() { return 'w' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
-  // Items are stored as { text, note }. Older saves used plain strings; normalize on the way in.
   function normalizeItem(it) {
     if (typeof it === 'string') return { text: it, note: '' };
     return { text: it.text || '', note: typeof it.note === 'string' ? it.note : '' };
@@ -1014,10 +1050,9 @@
     return { id: wid(), name: name || 'Untitled Workbench', drawers: normalizeDrawers(drawerList || clone(DEFAULTS)) };
   }
 
-  // state = { activeId, workbenches: [ { id, name, drawers: [...] } ] }
   let state = loadState();
   state.workbenches.forEach(w => normalizeDrawers(w.drawers));
-  let drawers = activeWorkbench().drawers; // live reference to the active workbench's drawers
+  let drawers = activeWorkbench().drawers;
 
   function activeWorkbench() {
     return state.workbenches.find(w => w.id === state.activeId) || state.workbenches[0];
@@ -1035,7 +1070,6 @@
           return parsed;
         }
       }
-      // Migrate a single-cabinet save from the pre-workbench version
       const legacy = localStorage.getItem(LEGACY_KEY);
       if (legacy) {
         const ld = JSON.parse(legacy);
@@ -1053,7 +1087,7 @@
 
   function save() {
     const wb = activeWorkbench();
-    if (wb) wb.drawers = drawers; // re-sync after any reassignment of `drawers`
+    if (wb) wb.drawers = drawers;
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
@@ -1293,7 +1327,6 @@
 
   window.addEventListener('resize', flagOverflows);
 
-  // Drag-and-drop reorder with live reordering of other drawers
   let dragState = null;
 
   function startDrag(e, drawerId) {
@@ -1405,7 +1438,6 @@
     render();
   }
 
-  // Modal handling
   const modal = document.getElementById('edit-modal');
   const form = document.getElementById('edit-form');
   const editTitle = document.getElementById('edit-title');
@@ -1525,7 +1557,6 @@
     const width = parseInt(form.width.value, 10) || 1;
     if (!label || lines.length === 0) return;
 
-    // Preserve notes: match each new line to an existing item with the same text.
     const existing = editingId ? ((drawers.find(x => x.id === editingId) || {}).items || []) : [];
     const pool = existing.map(it => ({ text: it.text, note: it.note }));
     const items = lines.map(line => {
@@ -1557,7 +1588,6 @@
 
   document.getElementById('add-drawer').addEventListener('click', openCreate);
 
-  // Focus view (single drawer expanded)
   const focusView = document.getElementById('focus-view');
   const focusCloseBtn = document.getElementById('focus-close');
   let focusedId = null;
@@ -1692,7 +1722,6 @@
     if (e.target === focusView) closeFocus();
   });
 
-  // Item note editor (auto-saving bottom sheet)
   const noteView = document.getElementById('note-view');
   const noteCloseBtn = document.getElementById('note-close');
   const noteText = document.getElementById('note-text');
@@ -1746,7 +1775,6 @@
     if (e.target === noteView) closeNote();
   });
 
-  // PDF export via browser print dialog
   function renderPrintView() {
     const grid = document.querySelector('#print-view .print-grid');
     const meta = document.querySelector('#print-view .print-meta');
@@ -1784,7 +1812,6 @@
     window.print();
   });
 
-  // Also keep print view fresh if user prints via Cmd/Ctrl+P
   window.addEventListener('beforeprint', renderPrintView);
 
   document.getElementById('reset').addEventListener('click', () => {
@@ -1795,7 +1822,6 @@
     }
   });
 
-  // Keyboard shortcuts
   document.addEventListener('keydown', (e) => {
     if (!noteView.hidden) {
       if (e.key === 'Escape') { e.preventDefault(); closeNote(); }
