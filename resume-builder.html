@@ -798,19 +798,21 @@
                     body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.4; margin: 0; padding: 40px; }
                     h1 { margin: 0 0 5px 0; font-size: 24px; text-align: center; color: #000; }
                     .contact-info { text-align: center; font-size: 13px; color: #555; margin-bottom: 20px; }
-                    h2 { font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-top: 20px; margin-bottom: 10px; color: #000; text-transform: uppercase; }
-                    .job { margin-bottom: 15px; }
-                    .job-header { display: flex; justify-content: space-between; align-items: baseline; }
-                    .job-title { font-weight: bold; font-size: 14px; color: #000; }
-                    .job-company { font-style: italic; font-size: 14px; }
-                    .job-date, .job-location { font-size: 13px; color: #555; }
+                    h2 { font-size: 16px; border-bottom: 1px solid #ccc; padding-bottom: 3px; margin-top: 20px; margin-bottom: 10px; color: #000; text-transform: uppercase; page-break-after: avoid; }
+                    .job { margin-bottom: 15px; page-break-inside: avoid; }
+                    .job-header { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+                    .job-subheader { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; }
+                    .job-title { flex: 1 1 auto; min-width: 0; font-weight: bold; font-size: 14px; color: #000; }
+                    .job-company { flex: 1 1 auto; min-width: 0; font-style: italic; font-size: 14px; }
+                    .job-date { flex: 0 0 auto; white-space: nowrap; text-align: right; font-size: 13px; color: #555; }
+                    .job-location { flex: 0 0 auto; white-space: nowrap; text-align: right; font-size: 13px; color: #555; }
                     ul { margin: 5px 0 0 0; padding-left: 20px; font-size: 13px; }
                     li { margin-bottom: 3px; }
                     .skills { font-size: 13px; line-height: 1.6; }
                     .summary { font-size: 13px; margin-bottom: 15px; }
-                    @page { margin: 0; }
+                    @page { size: letter; margin: 0.75in; }
                     @media print {
-                        body { padding: 1in 0.75in; }
+                        body { padding: 0; }
                     }
                     ${extraStyles}
                 </style>
@@ -842,12 +844,17 @@
                     if (!title && !company) return;
                     hasExp = true;
 
+                    const dateStr = (start || end) ? `${start || ''}${start && end ? ' - ' : ''}${end || ''}` : '';
+
                     expHtml += `<div class="job">
                         <div class="job-header">
-                            <div><span class="job-title">${title || 'Job Title'}</span> | <span class="job-company">${company || ''}</span></div>
-                            <div class="job-date">${start || 'Unknown'} - ${end || 'Present'}</div>
+                            <div class="job-title">${title || 'Job Title'}</div>
+                            ${dateStr ? `<div class="job-date">${dateStr}</div>` : ''}
                         </div>
-                        <div class="job-location">${loc || ''}</div>
+                        ${(company || loc) ? `<div class="job-subheader">
+                            <div class="job-company">${company || ''}</div>
+                            ${loc ? `<div class="job-location">${loc}</div>` : ''}
+                        </div>` : ''}
                     `;
 
                     if (bulletsStr) {
@@ -882,12 +889,17 @@
                     if (!degree && !school) return;
                     hasEdu = true;
 
+                    const dateStr = (start || end) ? `${start || ''}${start && end ? ' - ' : ''}${end || ''}` : '';
+
                     eduHtml += `<div class="job">
                         <div class="job-header">
-                            <div><span class="job-title">${degree || 'Degree'}</span> | <span class="job-company">${school || ''}</span></div>
-                            <div class="job-date">${start || 'Unknown'} - ${end || 'Unknown'}</div>
+                            <div class="job-title">${degree || 'Degree'}</div>
+                            ${dateStr ? `<div class="job-date">${dateStr}</div>` : ''}
                         </div>
-                        <div class="job-location">${loc || ''}</div>
+                        ${(school || loc) ? `<div class="job-subheader">
+                            <div class="job-company">${school || ''}</div>
+                            ${loc ? `<div class="job-location">${loc}</div>` : ''}
+                        </div>` : ''}
                     </div>`;
                 });
                 if (hasEdu) html += eduHtml;
