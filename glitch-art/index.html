@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glitch Out</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #080c14;
+    --surface:  #111827;
+    --surface2: #1c2333;
+    --border:   #2a3348;
+    --accent:   #e63054;
+    --accent2:  #00e5c9;
+    --text:     #e2e8f0;
+    --muted:    #64748b;
+    --tag-rand: #7c3aed;
+    --sidebar:  260px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 13px;
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0 18px;
+    height: 46px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+  }
+  header h1 {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+  header span {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+  #status-bar {
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 11px;
+    min-width: 160px;
+    text-align: right;
+  }
+  #status-bar.processing { color: var(--accent2); }
+  #status-bar.done { color: var(--accent2); }
+
+  /* ── LAYOUT ── */
+  #app {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* ── SIDEBAR ── */
+  aside {
+    width: var(--sidebar);
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  aside::-webkit-scrollbar { width: 4px; }
+  aside::-webkit-scrollbar-track { background: transparent; }
+  aside::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .sidebar-section {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* ── UPLOAD ZONE ── */
+  #upload-zone {
+    border: 1.5px dashed var(--border);
+    border-radius: 6px;
+    padding: 16px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+  }
+  #upload-zone:hover, #upload-zone.drag-over {
+    border-color: var(--accent);
+    background: rgba(230, 48, 84, 0.06);
+  }
+  #upload-zone input[type="file"] {
+    position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+  #upload-icon { font-size: 22px; margin-bottom: 5px; }
+  #upload-label { color: var(--muted); font-size: 11px; line-height: 1.5; }
+  #upload-label strong { color: var(--text); }
+  #file-name {
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--accent2);
+    word-break: break-all;
+    display: none;
+  }
+
+  /* ── EFFECT GRID ── */
+  #effect-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  .effect-btn {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 5px;
+    padding: 8px 7px;
+    cursor: pointer;
+    transition: border-color 0.12s, background 0.12s;
+    text-align: left;
+    color: var(--text);
+    position: relative;
+  }
+  .effect-btn:hover {
+    border-color: var(--accent);
+  }
+  .effect-btn.active {
+    border-color: var(--accent);
+    background: rgba(230, 48, 84, 0.12);
+  }
+  .effect-btn .ename {
+    font-size: 11px;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 2px;
+    letter-spacing: 0.3px;
+  }
+  .effect-btn .edesc {
+    font-size: 9px;
+    color: var(--muted);
+    line-height: 1.35;
+    display: block;
+  }
+  .effect-btn .rand-tag {
+    position: absolute;
+    top: 5px; right: 5px;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--tag-rand);
+  }
+  .effect-btn .rand-tag[title]:hover::after {
+    content: attr(title);
+    position: absolute;
+    right: 0;
+    top: 10px;
+    background: var(--surface2);
+    color: var(--text);
+    font-size: 9px;
+    padding: 2px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+    z-index: 10;
+  }
+
+  /* ── PARAMS ── */
+  .param-row {
+    margin-bottom: 14px;
+  }
+  .param-row:last-child { margin-bottom: 0; }
+  .param-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .param-name {
+    font-size: 11px;
+    color: var(--text);
+    letter-spacing: 0.5px;
+  }
+  .param-val {
+    font-size: 11px;
+    color: var(--accent2);
+    min-width: 40px;
+    text-align: right;
+  }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    cursor: pointer;
+    box-shadow: 0 0 6px rgba(230, 48, 84, 0.6);
+    transition: transform 0.1s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+  }
+  input[type="range"]:focus::-webkit-slider-thumb { box-shadow: 0 0 10px rgba(230, 48, 84, 0.9); }
+
+  /* ── ACTIONS ── */
+  .action-row {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    flex: 1;
+    padding: 9px 6px;
+    border-radius: 5px;
+    border: 1.5px solid transparent;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  .btn-primary:hover { background: #ff4a6a; }
+  .btn-primary:disabled { opacity: 0.4; cursor: default; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--muted);
+    border-color: var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn-ghost:disabled { opacity: 0.3; cursor: default; }
+  .btn-save {
+    background: var(--surface2);
+    color: var(--accent2);
+    border-color: var(--accent2);
+  }
+  .btn-save:hover { background: rgba(0, 229, 201, 0.12); }
+  .btn-save:disabled { opacity: 0.3; cursor: default; }
+
+  #reroll-btn {
+    width: 100%;
+    margin-top: 8px;
+    display: none;
+  }
+
+  /* ── CANVAS AREA ── */
+  main {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #canvas {
+    max-width: 100%;
+    max-height: 100%;
+    display: none;
+    image-rendering: pixelated;
+  }
+
+  #empty-state {
+    text-align: center;
+    color: var(--muted);
+  }
+  #empty-state .big { font-size: 48px; margin-bottom: 14px; }
+  #empty-state p { font-size: 12px; line-height: 1.7; }
+
+  #drop-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 12, 20, 0.88);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: var(--accent);
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: 2px dashed var(--accent);
+    z-index: 20;
+  }
+
+  #loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 12, 20, 0.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 30;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #loading-overlay span {
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  /* ── LEGEND ── */
+  .legend {
+    font-size: 9px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .legend-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--tag-rand); flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Glitch Out</h1>
+  <span>// pixel corruption tool</span>
+  <div id="status-bar">drop an image to start</div>
+</header>
+
+<div id="app">
+  <aside>
+
+    <!-- UPLOAD -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Image</div>
+      <div id="upload-zone">
+        <input type="file" id="file-input" accept="image/*">
+        <div id="upload-icon">📁</div>
+        <div id="upload-label"><strong>Click or drop</strong><br>any image file</div>
+        <div id="file-name"></div>
+      </div>
+    </div>
+
+    <!-- EFFECTS -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">
+        Effect
+        <span class="legend"><span class="legend-dot"></span>uses randomness</span>
+      </div>
+      <div id="effect-grid">
+        <!-- injected by JS -->
+      </div>
+    </div>
+
+    <!-- PARAMS -->
+    <div class="sidebar-section" id="params-section">
+      <div class="sidebar-label">Controls</div>
+      <div class="param-row" id="param-row-0">
+        <div class="param-header">
+          <span class="param-name" id="param-label-0">—</span>
+          <span class="param-val" id="param-val-0">—</span>
+        </div>
+        <input type="range" id="param-slider-0">
+      </div>
+      <div class="param-row" id="param-row-1">
+        <div class="param-header">
+          <span class="param-name" id="param-label-1">—</span>
+          <span class="param-val" id="param-val-1">—</span>
+        </div>
+        <input type="range" id="param-slider-1">
+      </div>
+      <button class="btn btn-ghost" id="reroll-btn">🎲 Re-roll</button>
+    </div>
+
+    <!-- ACTIONS -->
+    <div class="sidebar-section">
+      <div class="sidebar-label">Output</div>
+      <div class="action-row">
+        <button class="btn btn-save" id="save-btn" disabled>Save PNG</button>
+      </div>
+    </div>
+
+  </aside>
+
+  <main id="main">
+    <div id="empty-state">
+      <div class="big">⚡</div>
+      <p>Drop an image anywhere<br>or click the panel to upload.</p>
+    </div>
+    <canvas id="canvas"></canvas>
+    <div id="drop-overlay">DROP TO GLITCH</div>
+    <div id="loading-overlay"><div class="spinner"></div><span>processing</span></div>
+  </main>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────────────────────
+// PRNG — seeded so renders are reproducible per seed value
+// ─────────────────────────────────────────────────────────────────────────────
+function makePRNG(seed) {
+  let s = (seed ^ 0xdeadbeef) | 0;
+  return () => {
+    s = (s + 0x6D2B79F5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), s | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+let currentSeed = 42;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// EFFECT DEFINITIONS
+// Each effect: label, desc, random flag, 2 params, apply(src, w, h, params, rng)
+// ─────────────────────────────────────────────────────────────────────────────
+const EFFECTS = [
+  {
+    id: 'channel-shift',
+    label: 'Channel Shift',
+    desc: 'RGB ghost halo',
+    random: false,
+    params: [
+      { id: 'redShift',  label: 'Red Shift',  min: 0, max: 80, default: 18, unit: 'px' },
+      { id: 'blueShift', label: 'Blue Shift', min: 0, max: 80, default: 12, unit: 'px' }
+    ],
+    apply(src, w, h, p) {
+      const out = new Uint8ClampedArray(src);
+      const rs = Math.round(p[0]);
+      const bs = Math.round(p[1]);
+      for (let y = 0; y < h; y++) {
+        const row = y * w;
+        for (let x = 0; x < w; x++) {
+          const d  = (row + x) * 4;
+          const sr = (row + ((x - rs % w + w * 2) % w)) * 4;
+          const sb = (row + ((x + bs) % w)) * 4;
+          out[d]     = src[sr];       // R shifted right
+          out[d + 2] = src[sb + 2];  // B shifted left
+        }
+      }
+      return out;
+    }
+  },
+
+  {
+    id: 'row-corruption',
+    label: 'Row Corruption',
+    desc: 'Rows slide sideways',
+    random: true,
+    params: [
+      { id: 'chaos', label: 'Chaos',  min: 1,  max: 50,  default: 15, unit: '%'  },
+      { id: 'reach', label: 'Reach',  min: 1,  max: 200, default: 60, unit: 'px' }
+    ],
+    apply(src, w, h, p, rng) {
+      const out = new Uint8ClampedArray(src);
+      const prob = p[0] / 100;
+      const maxS = Math.round(p[1]);
+      for (let y = 0; y < h; y++) {
+        if (rng() < prob) {
+          const shift = Math.round((rng() * 2 - 1) * maxS);
+          const row = y * w;
+          for (let x = 0; x < w; x++) {
+            const d = (row + x) * 4;
+            const sx = ((x - shift) % w + w) % w;
+            const s = (row + sx) * 4;
+            out[d]=src[s]; out[d+1]=src[s+1]; out[d+2]=src[s+2]; out[d+3]=src[s+3];
+          }
+        }
+      }
+      return out;
+    }
+  },
+
+  {
+    id: 'pixel-sort',
+    label: 'Pixel Sort',
+    desc: 'Bright columns streak',
+    random: false,
+    params: [
+      { id: 'threshold', label: 'Threshold', min: 10, max: 245, default: 120, unit: ''   },
+      { id: 'minRun',    label: 'Min Run',   min: 1,  max: 50,  default: 4,   unit: 'px' }
+    ],
+    apply(src, w, h, p) {
+      const out = new Uint8ClampedArray(src);
+      const thresh  = p[0];
+      const minRun  = Math.max(1, Math.round(p[1]));
+
+      for (let x = 0; x < w; x += 2) {
+        let inRun = false, runStart = 0;
+        for (let y = 0; y <= h; y++) {
+          let lum = -1;
+          if (y < h) {
+            const i = (y * w + x) * 4;
+            lum = 0.299 * src[i] + 0.587 * src[i+1] + 0.114 * src[i+2];
+          }
+          if (lum > thresh && !inRun) {
+            inRun = true; runStart = y;
+          } else if ((lum <= thresh || y === h) && inRun) {
+            inRun = false;
+            const runLen = y - runStart;
+            if (runLen >= minRun) {
+              const run = new Array(runLen);
+              for (let j = 0; j < runLen; j++) {
+                const i = ((runStart + j) * w + x) * 4;
+                run[j] = [0.299*src[i]+0.587*src[i+1]+0.114*src[i+2], src[i], src[i+1], src[i+2], src[i+3]];
+              }
+              run.sort((a, b) => a[0] - b[0]);
+              for (let j = 0; j < runLen; j++) {
+                const i = ((runStart + j) * w + x) * 4;
+                out[i]=run[j][1]; out[i+1]=run[j][2]; out[i+2]=run[j][3]; out[i+3]=run[j][4];
+              }
+            }
+          }
+        }
+      }
+      return out;
+    }
+  },
+
+  {
+    id: 'block-scramble',
+    label: 'Block Scramble',
+    desc: 'Chunks swap + channel rotate',
+    random: true,
+    params: [
+      { id: 'density', label: 'Density', min: 2,  max: 60,  default: 28, unit: ''   },
+      { id: 'scale',   label: 'Scale',   min: 5,  max: 200, default: 40, unit: 'px' }
+    ],
+    apply(src, w, h, p, rng) {
+      const out = new Uint8ClampedArray(src);
+      const count  = Math.round(p[0]);
+      const maxSz  = Math.round(p[1]);
+
+      for (let b = 0; b < count; b++) {
+        const bw = Math.max(2, Math.round(rng() * maxSz * 3));
+        const bh = Math.max(2, Math.round(rng() * maxSz * 0.5));
+        if (bw >= w || bh >= h) continue;
+        const dy = Math.floor(rng() * (h - bh));
+        const dx = Math.floor(rng() * (w - bw));
+        const sy = Math.floor(rng() * (h - bh));
+        const sx = Math.floor(rng() * (w - bw));
+        for (let row = 0; row < bh; row++) {
+          for (let col = 0; col < bw; col++) {
+            const si = ((sy + row) * w + (sx + col)) * 4;
+            const di = ((dy + row) * w + (dx + col)) * 4;
+            out[di]   = src[si + 2]; // R <- B
+            out[di+1] = src[si];     // G <- R
+            out[di+2] = src[si + 1]; // B <- G
+            out[di+3] = src[si + 3];
+          }
+        }
+      }
+      return out;
+    }
+  },
+
+  {
+    id: 'sine-wave',
+    label: 'Sine Wave',
+    desc: 'Rows wobble on a sine curve',
+    random: false,
+    params: [
+      { id: 'amplitude', label: 'Amplitude', min: 1,  max: 60, default: 14, unit: 'px'  },
+      { id: 'frequency', label: 'Frequency', min: 1,  max: 20, default: 6,  unit: 'cyc' }
+    ],
+    apply(src, w, h, p) {
+      const out = new Uint8ClampedArray(src.length);
+      const amp  = p[0];
+      const freq = p[1];
+      for (let y = 0; y < h; y++) {
+        const shift = Math.round(amp * Math.sin(2 * Math.PI * freq * y / h));
+        const row = y * w;
+        for (let x = 0; x < w; x++) {
+          const sx = ((x - shift) % w + w) % w;
+          const si = (row + sx) * 4;
+          const di = (row + x)  * 4;
+          out[di]=src[si]; out[di+1]=src[si+1]; out[di+2]=src[si+2]; out[di+3]=src[si+3];
+        }
+      }
+      return out;
+    }
+  },
+
+  {
+    id: 'chroma-scanlines',
+    label: 'Chroma + Scanlines',
+    desc: 'Color split meets CRT lines',
+    random: false,
+    params: [
+      { id: 'chroma',     label: 'Chroma',     min: 0, max: 80, default: 24, unit: 'px' },
+      { id: 'scanlines',  label: 'Scanlines',  min: 0, max: 80, default: 15, unit: '%'  }
+    ],
+    apply(src, w, h, p) {
+      const out = new Uint8ClampedArray(src);
+      const cs = Math.round(p[0]);
+      const sl = p[1] / 100;
+      for (let y = 0; y < h; y++) {
+        const row = y * w;
+        for (let x = 0; x < w; x++) {
+          const d  = (row + x) * 4;
+          const sr = (row + ((x - cs % w + w * 2) % w)) * 4;
+          const sb = (row + ((x + cs) % w)) * 4;
+          out[d]     = src[sr];
+          out[d + 2] = src[sb + 2];
+        }
+        if (y % 2 === 0) {
+          for (let x = 0; x < w; x++) {
+            const d = (row + x) * 4;
+            out[d]   = Math.round(out[d]   * (1 - sl));
+            out[d+1] = Math.round(out[d+1] * (1 - sl));
+            out[d+2] = Math.round(out[d+2] * (1 - sl));
+          }
+        }
+      }
+      return out;
+    }
+  },
+
+  {
+    id: 'databend',
+    label: 'Databend',
+    desc: 'Raw byte XOR corruption',
+    random: true,
+    params: [
+      { id: 'bursts',    label: 'Bursts',    min: 1,  max: 24,   default: 12,  unit: ''    },
+      { id: 'intensity', label: 'Intensity', min: 50, max: 2000, default: 800, unit: 'px'  }
+    ],
+    apply(src, w, h, p, rng) {
+      const out = new Uint8ClampedArray(src);
+      const count = Math.round(p[0]);
+      const len   = Math.round(p[1]) * 4;
+      const total = src.length;
+
+      for (let b = 0; b < count; b++) {
+        if (len >= total) continue;
+        const sp = Math.floor(rng() * (total - len));
+        const dp = Math.floor(rng() * (total - len));
+        for (let i = 0; i < len; i++) {
+          out[dp + i] = (src[sp + i] ^ out[dp + i]) & 0xff;
+        }
+      }
+      return out;
+    }
+  }
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────────────────────
+const MAX_DIM = 1400;
+let srcCanvas  = null;   // offscreen canvas holding source image at processing res
+let activeIdx  = 0;      // currently selected effect index
+let paramVals  = [EFFECTS[0].params[0].default, EFFECTS[0].params[1].default];
+let renderTimer = null;
+let isRendering = false;
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DOM REFS
+// ─────────────────────────────────────────────────────────────────────────────
+const canvas         = document.getElementById('canvas');
+const ctx            = canvas.getContext('2d');
+const statusBar      = document.getElementById('status-bar');
+const emptyState     = document.getElementById('empty-state');
+const dropOverlay    = document.getElementById('drop-overlay');
+const loadingOverlay = document.getElementById('loading-overlay');
+const saveBtn        = document.getElementById('save-btn');
+const rerollBtn      = document.getElementById('reroll-btn');
+const fileInput      = document.getElementById('file-input');
+const uploadZone     = document.getElementById('upload-zone');
+const fileName       = document.getElementById('file-name');
+const effectGrid     = document.getElementById('effect-grid');
+
+const sliders = [0, 1].map(i => ({
+  slider: document.getElementById(`param-slider-${i}`),
+  label:  document.getElementById(`param-label-${i}`),
+  val:    document.getElementById(`param-val-${i}`)
+}));
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUILD EFFECT BUTTONS
+// ─────────────────────────────────────────────────────────────────────────────
+EFFECTS.forEach((fx, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'effect-btn' + (i === 0 ? ' active' : '');
+  btn.dataset.idx = i;
+  btn.innerHTML = `
+    <span class="ename">${fx.label}</span>
+    <span class="edesc">${fx.desc}</span>
+    ${fx.random ? '<span class="rand-tag" title="uses randomness"></span>' : ''}
+  `;
+  btn.addEventListener('click', () => selectEffect(i));
+  effectGrid.appendChild(btn);
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SELECT EFFECT
+// ─────────────────────────────────────────────────────────────────────────────
+function selectEffect(idx) {
+  activeIdx = idx;
+  const fx = EFFECTS[idx];
+
+  // Update button states
+  document.querySelectorAll('.effect-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === idx);
+  });
+
+  // Update sliders
+  [0, 1].forEach(i => {
+    const param = fx.params[i];
+    paramVals[i] = param.default;
+    sliders[i].label.textContent = param.label;
+    sliders[i].slider.min   = param.min;
+    sliders[i].slider.max   = param.max;
+    sliders[i].slider.step  = param.step || 1;
+    sliders[i].slider.value = param.default;
+    sliders[i].val.textContent = formatVal(param.default, param.unit);
+  });
+
+  // Show re-roll button for random effects
+  rerollBtn.style.display = fx.random ? 'block' : 'none';
+
+  scheduleRender();
+}
+
+function formatVal(v, unit) {
+  return unit ? `${Math.round(v)}${unit}` : Math.round(v);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SLIDER LISTENERS
+// ─────────────────────────────────────────────────────────────────────────────
+[0, 1].forEach(i => {
+  sliders[i].slider.addEventListener('input', () => {
+    const param = EFFECTS[activeIdx].params[i];
+    paramVals[i] = parseFloat(sliders[i].slider.value);
+    sliders[i].val.textContent = formatVal(paramVals[i], param.unit);
+    scheduleRender();
+  });
+});
+
+rerollBtn.addEventListener('click', () => {
+  currentSeed = Math.floor(Math.random() * 0xffffff);
+  scheduleRender();
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// IMAGE LOADING
+// ─────────────────────────────────────────────────────────────────────────────
+function loadFile(file) {
+  if (!file || !file.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(file);
+  const img = new Image();
+  img.onload = () => {
+    let { naturalWidth: iw, naturalHeight: ih } = img;
+    const scale = Math.min(1, MAX_DIM / Math.max(iw, ih));
+    const pw = Math.round(iw * scale);
+    const ph = Math.round(ih * scale);
+
+    srcCanvas = document.createElement('canvas');
+    srcCanvas.width  = pw;
+    srcCanvas.height = ph;
+    srcCanvas.getContext('2d').drawImage(img, 0, 0, pw, ph);
+    URL.revokeObjectURL(url);
+
+    fileName.textContent = file.name;
+    fileName.style.display = 'block';
+    emptyState.style.display = 'none';
+    canvas.style.display = 'block';
+
+    setStatus(`${file.name} — ${iw}×${ih}${scale < 1 ? ` → ${pw}×${ph}` : ''}`);
+    scheduleRender(0);
+  };
+  img.onerror = () => { setStatus('Error loading image.'); URL.revokeObjectURL(url); };
+  img.src = url;
+}
+
+fileInput.addEventListener('change', e => { if (e.target.files[0]) loadFile(e.target.files[0]); });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DRAG AND DROP (anywhere on the page)
+// ─────────────────────────────────────────────────────────────────────────────
+document.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropOverlay.style.display = 'flex';
+});
+document.addEventListener('dragleave', e => {
+  if (!e.relatedTarget || e.relatedTarget === document.documentElement) {
+    dropOverlay.style.display = 'none';
+  }
+});
+document.addEventListener('drop', e => {
+  e.preventDefault();
+  dropOverlay.style.display = 'none';
+  const f = e.dataTransfer?.files?.[0];
+  if (f) loadFile(f);
+});
+
+uploadZone.addEventListener('dragover',  e => { e.stopPropagation(); e.preventDefault(); uploadZone.classList.add('drag-over'); });
+uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('drag-over'));
+uploadZone.addEventListener('drop',      e => { uploadZone.classList.remove('drag-over'); });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// RENDER PIPELINE
+// ─────────────────────────────────────────────────────────────────────────────
+function scheduleRender(delay = 280) {
+  if (!srcCanvas) return;
+  clearTimeout(renderTimer);
+  renderTimer = setTimeout(render, delay);
+}
+
+function render() {
+  if (!srcCanvas || isRendering) return;
+  isRendering = true;
+
+  const fx  = EFFECTS[activeIdx];
+  const w   = srcCanvas.width;
+  const h   = srcCanvas.height;
+  const rng = makePRNG(currentSeed);
+
+  setStatus('processing...', 'processing');
+  loadingOverlay.style.display = 'flex';
+
+  // Yield to browser to show loading state, then process
+  requestAnimationFrame(() => {
+    setTimeout(() => {
+      const srcCtx = srcCanvas.getContext('2d');
+      const imgData = srcCtx.getImageData(0, 0, w, h);
+      const src = imgData.data;
+
+      let outPixels;
+      try {
+        outPixels = fx.apply(src, w, h, paramVals, rng);
+      } catch (err) {
+        console.error('Render error:', err);
+        outPixels = src;
+      }
+
+      canvas.width  = w;
+      canvas.height = h;
+      const out = ctx.createImageData(w, h);
+      out.data.set(outPixels);
+      ctx.putImageData(out, 0, 0);
+
+      loadingOverlay.style.display = 'none';
+      saveBtn.disabled = false;
+      isRendering = false;
+      setStatus(`${fx.label} — ${w}×${h}`, 'done');
+    }, 10);
+  });
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SAVE
+// ─────────────────────────────────────────────────────────────────────────────
+saveBtn.addEventListener('click', () => {
+  if (!srcCanvas) return;
+  const fx = EFFECTS[activeIdx];
+  const slug = fx.id + '-' + new Date().toISOString().slice(0,10);
+  canvas.toBlob(blob => {
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href     = url;
+    a.download = `glitch-out-${slug}.png`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, 'image/png');
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// STATUS
+// ─────────────────────────────────────────────────────────────────────────────
+function setStatus(msg, cls = '') {
+  statusBar.textContent = msg;
+  statusBar.className   = cls;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// INIT
+// ─────────────────────────────────────────────────────────────────────────────
+selectEffect(0);
+</script>
+</body>
+</html>
