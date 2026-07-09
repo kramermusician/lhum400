@@ -1,0 +1,726 @@
+<meta charset="utf-8">
+<title>Build Your Band's Website — Free, Public, Yours</title>
+<style>
+  :root{
+    --ink:#141414;
+    --slate:#3a3a3a;
+    --stone:#6b6b6b;
+    --line:#d8d3c8;
+    --canvas:#f4f0e6;
+    --canvas-2:#eae4d6;
+    --paper:#fbf9f3;
+    --accent:#1f1f1f;
+    --code-bg:#1c1c1c;
+    --code-ink:#e9e4d6;
+    --ok:#4a7a4a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;
+    background:var(--canvas);
+    color:var(--ink);
+    overflow:hidden;
+  }
+  .deck{height:100vh;width:100vw;position:relative}
+  .slide{
+    position:absolute;inset:0;
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    padding:6vh 9vw;
+    animation:fade .45s ease;
+  }
+  .slide.active{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+  .kicker{
+    font-size:.8rem;letter-spacing:.22em;text-transform:uppercase;
+    color:var(--stone);margin-bottom:1.1rem;font-weight:600;
+  }
+  h1{font-size:3.6rem;line-height:1.05;letter-spacing:-.02em;margin-bottom:1.4rem}
+  h2{font-size:2.5rem;line-height:1.1;letter-spacing:-.01em;margin-bottom:1.6rem}
+  .lead{font-size:1.5rem;line-height:1.5;color:var(--slate);max-width:46ch}
+  .big{font-size:2rem;line-height:1.45;max-width:28ch}
+  ul{list-style:none;margin-top:.5rem}
+  li{
+    font-size:1.4rem;line-height:1.5;color:var(--slate);
+    padding:.55rem 0 .55rem 2rem;position:relative;max-width:52ch;
+  }
+  li::before{content:"—";position:absolute;left:0;color:var(--stone)}
+  .step-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:2.6rem;height:2.6rem;border-radius:50%;
+    background:var(--ink);color:var(--canvas);
+    font-size:1.2rem;font-weight:700;margin-bottom:1.2rem;
+  }
+  .note{
+    margin-top:1.6rem;font-size:1.05rem;color:var(--stone);
+    border-left:3px solid var(--line);padding-left:1rem;max-width:50ch;font-style:italic;
+  }
+
+  /* code block */
+  .code{
+    background:var(--code-bg);border-radius:10px;
+    margin-top:1.2rem;max-width:64ch;width:100%;
+    box-shadow:0 10px 30px rgba(0,0,0,.18);position:relative;overflow:hidden;
+  }
+  .code-head{
+    display:flex;justify-content:space-between;align-items:center;
+    padding:.55rem .9rem;background:#252525;border-bottom:1px solid #333;
+  }
+  .code-file{color:#9a9488;font-size:.82rem;letter-spacing:.04em;font-family:"SF Mono",Menlo,Consolas,monospace}
+  .copy-btn{
+    background:#3a3a3a;color:var(--code-ink);border:1px solid #4a4a4a;
+    border-radius:6px;padding:.3rem .7rem;font-size:.78rem;cursor:pointer;
+    letter-spacing:.05em;transition:background .15s;font-weight:600;
+  }
+  .copy-btn:hover{background:#4a4a4a}
+  .copy-btn.done{background:var(--ok);border-color:var(--ok);color:#fff}
+  pre{
+    padding:1rem 1.1rem;overflow-x:auto;
+    font-family:"SF Mono",Menlo,Consolas,monospace;
+    font-size:.86rem;line-height:1.55;color:var(--code-ink);
+  }
+  .tok-tag{color:#8fb8d8}
+  .tok-attr{color:#c8a97e}
+  .tok-str{color:#a7c99a}
+  .tok-com{color:#6b6b6b;font-style:italic}
+  .tok-txt{color:#e9e4d6}
+
+  /* file tree */
+  .tree{
+    background:var(--paper);border:1px solid var(--line);border-radius:10px;
+    padding:1.4rem 1.6rem;margin-top:1rem;max-width:56ch;white-space:pre;
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:1.05rem;line-height:1.9;color:var(--slate);
+  }
+  .tree .dir{color:var(--ink);font-weight:700}
+  .tree .cmt{color:var(--stone);font-style:italic}
+
+  .cols{display:flex;gap:3rem;flex-wrap:wrap;align-items:flex-start}
+  .col{flex:1;min-width:280px}
+
+  /* progress + nav */
+  .bar{position:fixed;top:0;left:0;height:4px;background:var(--ink);transition:width .3s;z-index:20}
+  .counter{
+    position:fixed;bottom:1.4rem;right:2rem;font-size:.85rem;color:var(--stone);
+    letter-spacing:.1em;z-index:20;
+  }
+  .hint{
+    position:fixed;bottom:1.4rem;left:2rem;font-size:.8rem;color:var(--stone);
+    letter-spacing:.05em;z-index:20;
+  }
+  .tag{
+    display:inline-block;background:var(--canvas-2);border:1px solid var(--line);
+    color:var(--slate);font-size:.85rem;padding:.25rem .7rem;border-radius:20px;
+    margin:.2rem .3rem .2rem 0;letter-spacing:.03em;
+  }
+  .url-pill{
+    display:inline-block;background:var(--ink);color:var(--canvas);
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:1.15rem;
+    padding:.6rem 1.1rem;border-radius:8px;margin-top:1rem;letter-spacing:.02em;
+  }
+
+  /* compare table */
+  .compare-wrap{margin-top:1.2rem;max-width:78ch;width:100%}
+  table.compare{border-collapse:collapse;width:100%;background:var(--paper);
+    border:1px solid var(--line);border-radius:10px;overflow:hidden;font-size:.95rem}
+  table.compare th{
+    text-align:left;padding:.7rem .9rem;background:var(--canvas-2);
+    font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--stone);
+    font-weight:700;border-bottom:1px solid var(--line);
+  }
+  table.compare td{
+    padding:.75rem .9rem;vertical-align:top;border-bottom:1px solid var(--line);
+    color:var(--slate);line-height:1.45;
+  }
+  table.compare tr:last-child td{border-bottom:none}
+  table.compare td.name{color:var(--ink);font-weight:700;white-space:nowrap}
+  table.compare tbody tr{cursor:pointer;transition:background .15s,box-shadow .15s}
+  table.compare tbody tr:hover{background:#f1ede2}
+  table.compare tbody tr.active{background:#ece5d3;box-shadow:inset 3px 0 0 var(--ink)}
+  table.compare .pro::before{content:"+ ";color:var(--ok);font-weight:700}
+  table.compare .con::before{content:"– ";color:#a05a4a;font-weight:700}
+  table.compare .pro,table.compare .con{display:block;font-size:.88rem}
+
+  /* css lab */
+  .css-lab{display:flex;gap:2.6rem;flex-wrap:wrap;align-items:flex-start;margin-top:1.2rem}
+  .lab-controls{display:flex;flex-direction:column;gap:1.5rem;min-width:190px}
+  .lab-label{
+    display:block;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--stone);font-weight:700;margin-bottom:.4rem;
+  }
+  .color-wheel{
+    width:150px;height:150px;border-radius:50%;cursor:crosshair;position:relative;
+    background:radial-gradient(circle, #fff 0%, rgba(255,255,255,0) 72%),
+      conic-gradient(red,yellow,lime,cyan,blue,magenta,red);
+    border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.12);
+  }
+  .wheel-dot{
+    position:absolute;width:14px;height:14px;border-radius:50%;
+    background:#fff;border:2px solid var(--ink);transform:translate(-50%,-50%);
+    pointer-events:none;box-shadow:0 1px 4px rgba(0,0,0,.4);
+  }
+  .wheel-toggle{display:flex;gap:.4rem;margin-top:.8rem}
+  .lab-btn{
+    background:var(--paper);border:1px solid var(--line);color:var(--slate);
+    font-size:.78rem;padding:.35rem .7rem;border-radius:20px;cursor:pointer;
+    letter-spacing:.03em;font-weight:600;transition:background .15s,color .15s;
+  }
+  .lab-btn.active{background:var(--ink);color:var(--canvas);border-color:var(--ink)}
+  .hex-badge{
+    display:inline-block;background:var(--ink);color:var(--canvas);
+    font-family:"SF Mono",Menlo,Consolas,monospace;font-size:.95rem;
+    padding:.35rem .7rem;border-radius:6px;margin-top:.8rem;letter-spacing:.03em;
+  }
+  .lab-select,.lab-range{
+    width:100%;padding:.5rem .6rem;border:1px solid var(--line);border-radius:6px;
+    background:var(--paper);color:var(--ink);font-size:.9rem;font-family:inherit;
+  }
+  .lab-range{padding:0}
+  .lab-preview-wrap{flex:1;min-width:320px;display:flex;flex-direction:column;gap:1rem}
+  .lab-preview{
+    min-height:170px;border-radius:12px;border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:1.5rem;box-shadow:0 10px 30px rgba(0,0,0,.1);
+    transition:background-color .2s,color .2s;
+  }
+
+  /* responsive video embed */
+  .video-wrap{
+    position:relative;width:100%;padding-bottom:56.25%;height:0;
+    overflow:hidden;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.18);
+    background:#000;
+  }
+  .video-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+
+  .mini-list{margin-top:.4rem}
+  .mini-list li{font-size:1.05rem;line-height:1.5;padding:.4rem 0 .4rem 1.6rem}
+</style>
+
+<div class="bar" id="bar"></div>
+<div class="deck" id="deck">
+
+  <!-- 1 -->
+  <section class="slide active">
+    <div class="kicker">LHUM400 · Building Your Professional Presence</div>
+    <h1>Put your band<br>on the internet.</h1>
+    <p class="lead">A real website. Free forever. Public URL you can put on a business card. And you own every pixel — no monthly fee, no Wix, no Squarespace.</p>
+    <div style="margin-top:1.5rem">
+      <span class="tag">No coding degree needed</span>
+      <span class="tag">No terminal</span>
+      <span class="tag">No AI writing it for you</span>
+    </div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="kicker">The honest pitch</div>
+    <h2>Why do this yourself?</h2>
+    <ul>
+      <li>You update it whenever you want — new show, new single, new photo. No waiting on a "web guy."</li>
+      <li>It's free. GitHub hosts it for $0, no ads, no trial that expires.</li>
+      <li>You actually understand what's under the hood — so nothing about your own presence is a mystery.</li>
+      <li>It's a skill. "I built and run my band's site" is a real line in a real conversation.</li>
+    </ul>
+    <p class="note">You will type the code yourself. That's the point. It's less than you think.</p>
+  </section>
+
+  <!-- 2b -->
+  <section class="slide">
+    <div class="kicker">The landscape</div>
+    <h2>Many ways to build a site</h2>
+    <p class="lead" style="font-size:1.1rem;margin-bottom:.3rem">Click a row. GitHub Pages is one option among several — here's the honest tradeoff on each.</p>
+    <div class="compare-wrap">
+      <table class="compare" id="compareTable">
+        <thead>
+          <tr><th>Platform</th><th>Cost</th><th>Pros</th><th>Cons</th></tr>
+        </thead>
+        <tbody>
+          <tr class="active">
+            <td class="name">GitHub Pages</td>
+            <td>Free forever</td>
+            <td>
+              <span class="pro">You own every file, no lock-in</span>
+              <span class="pro">Real coding skill you keep</span>
+            </td>
+            <td>
+              <span class="con">You write the HTML/CSS yourself</span>
+              <span class="con">No drag-and-drop design tools</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="name">Google Sites</td>
+            <td>Free</td>
+            <td>
+              <span class="pro">Fastest to a live page, drag-and-drop</span>
+              <span class="pro">Familiar if you use Google Docs</span>
+            </td>
+            <td>
+              <span class="con">Looks generic, limited styling control</span>
+              <span class="con">Tied to a Google account</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="name">WordPress</td>
+            <td>Free tier, or paid hosting for full control</td>
+            <td>
+              <span class="pro">Huge theme/plugin ecosystem</span>
+              <span class="pro">Best choice if you'll blog often</span>
+            </td>
+            <td>
+              <span class="con">Free tier shows ads + WordPress branding</span>
+              <span class="con">Self-hosting has a real learning curve</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="name">Wix</td>
+            <td>Free tier, ~$16+/mo to remove branding</td>
+            <td>
+              <span class="pro">Easiest visual builder, no code</span>
+              <span class="pro">Polished templates fast</span>
+            </td>
+            <td>
+              <span class="con">Free plan carries Wix ads + a wix.com URL</span>
+              <span class="con">Hard to move your site off Wix later</span>
+            </td>
+          </tr>
+          <tr>
+            <td class="name">Squarespace</td>
+            <td>No free tier, ~$16–$49/mo</td>
+            <td>
+              <span class="pro">The most polished, design-forward templates</span>
+              <span class="pro">Great for a professional portfolio look</span>
+            </td>
+            <td>
+              <span class="con">Monthly cost forever, no free option</span>
+              <span class="con">Still someone else's platform, not yours</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">We're using GitHub Pages because it's free forever and it's yours. But now you know what you're choosing over.</p>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="kicker">Two tools, that's it</div>
+    <h2>What you'll need</h2>
+    <div class="cols">
+      <div class="col">
+        <div class="step-num">1</div>
+        <p class="big"><strong>A GitHub account</strong></p>
+        <p class="lead" style="font-size:1.2rem">Free. This is where your site lives and where the world loads it from. Sign up at github.com.</p>
+      </div>
+      <div class="col">
+        <div class="step-num">2</div>
+        <p class="big"><strong>VS Code</strong></p>
+        <p class="lead" style="font-size:1.2rem">Free. This is the app where you write and edit your website files. Download at code.visualstudio.com.</p>
+      </div>
+    </div>
+    <p class="note">That's the whole toolkit. Two free tools, one new account, zero dollars.</p>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="kicker">The mental model</div>
+    <h2>How a website actually works</h2>
+    <ul>
+      <li><strong>A website is just a folder of files.</strong> Really. Text files that a browser knows how to draw.</li>
+      <li><strong>HTML</strong> is the content — your words, your headings, your photos.</li>
+      <li><strong>CSS</strong> is the look — colors, fonts, spacing, the vibe.</li>
+      <li><strong>GitHub Pages</strong> takes your folder and hands it a public address anyone can visit.</li>
+    </ul>
+    <p class="note">You edit the folder → you upload the folder → GitHub shows it to the world. That's the entire loop.</p>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="kicker">Your project folder</div>
+    <h2>The file structure</h2>
+    <p class="lead" style="margin-bottom:.4rem">Make one folder on your computer. Inside it, this:</p>
+    <div class="tree">
+<span class="dir">my-band-site/</span>
+├── index.html      <span class="cmt"># your home page</span>
+├── style.css       <span class="cmt"># the look & colors</span>
+└── <span class="dir">images/</span>         <span class="cmt"># band photos go here</span>
+    └── band.jpg
+    </div>
+    <p class="note">index.html is special — GitHub always shows it first. It IS your homepage.</p>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="kicker">Step 1 · The page</div>
+    <h2>Your home page</h2>
+    <p class="lead" style="font-size:1.15rem;margin-bottom:.2rem">In VS Code, make a file called <strong>index.html</strong> and type this. Swap in your band's real words.</p>
+    <div class="code" data-code="index-html">
+      <div class="code-head">
+        <span class="code-file">index.html</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+<pre><code><span class="tok-tag">&lt;!DOCTYPE html&gt;</span>
+<span class="tok-tag">&lt;html</span> <span class="tok-attr">lang</span>=<span class="tok-str">"en"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;head&gt;</span>
+  <span class="tok-tag">&lt;meta</span> <span class="tok-attr">charset</span>=<span class="tok-str">"utf-8"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;title&gt;</span><span class="tok-txt">The Wildflowers</span><span class="tok-tag">&lt;/title&gt;</span>
+  <span class="tok-tag">&lt;link</span> <span class="tok-attr">rel</span>=<span class="tok-str">"stylesheet"</span> <span class="tok-attr">href</span>=<span class="tok-str">"style.css"</span><span class="tok-tag">&gt;</span>
+<span class="tok-tag">&lt;/head&gt;</span>
+<span class="tok-tag">&lt;body&gt;</span>
+  <span class="tok-tag">&lt;h1&gt;</span><span class="tok-txt">The Wildflowers</span><span class="tok-tag">&lt;/h1&gt;</span>
+  <span class="tok-tag">&lt;p&gt;</span><span class="tok-txt">Folk-rock from Boston. Loud when it counts.</span><span class="tok-tag">&lt;/p&gt;</span>
+  <span class="tok-tag">&lt;img</span> <span class="tok-attr">src</span>=<span class="tok-str">"images/band.jpg"</span> <span class="tok-attr">alt</span>=<span class="tok-str">"The band"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;h2&gt;</span><span class="tok-txt">Shows</span><span class="tok-tag">&lt;/h2&gt;</span>
+  <span class="tok-tag">&lt;p&gt;</span><span class="tok-txt">Aug 14 — The Sinclair, Cambridge</span><span class="tok-tag">&lt;/p&gt;</span>
+  <span class="tok-tag">&lt;p&gt;</span><span class="tok-txt">Email: hello@wildflowers.com</span><span class="tok-tag">&lt;/p&gt;</span>
+<span class="tok-tag">&lt;/body&gt;</span>
+<span class="tok-tag">&lt;/html&gt;</span></code></pre>
+    </div>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="kicker">Step 2 · The look</div>
+    <h2>Make it yours</h2>
+    <p class="lead" style="font-size:1.15rem;margin-bottom:.2rem">Make a second file called <strong>style.css</strong>. This is where the vibe lives. Change the colors and it's a different band.</p>
+    <div class="code" data-code="style-css">
+      <div class="code-head">
+        <span class="code-file">style.css</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+<pre><code><span class="tok-com">/* the whole page */</span>
+<span class="tok-attr">body</span> {
+  <span class="tok-tag">font-family</span>: <span class="tok-str">Georgia, serif</span>;
+  <span class="tok-tag">max-width</span>: <span class="tok-str">700px</span>;
+  <span class="tok-tag">margin</span>: <span class="tok-str">40px auto</span>;
+  <span class="tok-tag">padding</span>: <span class="tok-str">0 20px</span>;
+  <span class="tok-tag">background</span>: <span class="tok-str">#f4f0e6</span>;
+  <span class="tok-tag">color</span>: <span class="tok-str">#1a1a1a</span>;
+  <span class="tok-tag">line-height</span>: <span class="tok-str">1.6</span>;
+}
+<span class="tok-attr">h1</span> {
+  <span class="tok-tag">font-size</span>: <span class="tok-str">3rem</span>;
+  <span class="tok-tag">letter-spacing</span>: <span class="tok-str">-1px</span>;
+}
+<span class="tok-attr">img</span> {
+  <span class="tok-tag">width</span>: <span class="tok-str">100%</span>;
+  <span class="tok-tag">border-radius</span>: <span class="tok-str">8px</span>;
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- 7b -->
+  <section class="slide">
+    <div class="kicker">Play before you build</div>
+    <h2>Four properties, infinite looks</h2>
+    <p class="lead" style="font-size:1.1rem;margin-bottom:.2rem">Click the wheel. Pick a font. Drag the size. Watch the CSS write itself below.</p>
+    <div class="css-lab">
+      <div class="lab-controls">
+        <div>
+          <div class="color-wheel" id="colorWheel"><div class="wheel-dot" id="wheelDot" style="left:75px;top:8px"></div></div>
+          <div class="wheel-toggle">
+            <button class="lab-btn active" id="btnTargetBg" type="button">Background</button>
+            <button class="lab-btn" id="btnTargetText" type="button">Text</button>
+          </div>
+          <div class="hex-badge" id="hexBadge">#f4f0e6</div>
+        </div>
+        <div>
+          <label class="lab-label" for="fontSelect">Font</label>
+          <select class="lab-select" id="fontSelect">
+            <option value="Georgia, serif" selected>Georgia</option>
+            <option value="Helvetica, Arial, sans-serif">Helvetica</option>
+            <option value="'Courier New', monospace">Courier New</option>
+            <option value="'Times New Roman', serif">Times New Roman</option>
+            <option value="Verdana, sans-serif">Verdana</option>
+            <option value="'Comic Sans MS', cursive">Comic Sans</option>
+          </select>
+        </div>
+        <div>
+          <label class="lab-label" for="sizeRange">Size — <span id="sizeLabel">24px</span></label>
+          <input class="lab-range" id="sizeRange" type="range" min="14" max="48" value="24">
+        </div>
+      </div>
+      <div class="lab-preview-wrap">
+        <div class="lab-preview" id="labPreview">
+          <span id="labText">The Wildflowers</span>
+        </div>
+        <div class="code" data-code="lab-css">
+          <div class="code-head"><span class="code-file">style.css</span></div>
+          <pre><code id="labCode">body {
+  background-color: #f4f0e6;
+  color: #1a1a1a;
+  font-family: Georgia, serif;
+  font-size: 24px;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+    <p class="note">background-color, color, font-family, font-size — that's most of what makes a site look like anything at all.</p>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="kicker">Step 3 · See it before the world does</div>
+    <h2>Test it on your own machine</h2>
+    <ul>
+      <li>Find your <strong>index.html</strong> file in your folder.</li>
+      <li>Double-click it. It opens in your browser.</li>
+      <li>That's your website — running right now, just privately on your laptop.</li>
+      <li>Don't like something? Edit in VS Code, save, refresh the browser. Repeat until it's you.</li>
+    </ul>
+    <p class="note">Nothing is public yet. This is your rehearsal space. Get it right here first.</p>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="kicker">Step 4 · Get it online</div>
+    <h2>Upload to GitHub</h2>
+    <p class="lead" style="font-size:1.15rem">No terminal. No commands. Just drag and drop.</p>
+    <ul>
+      <li>On <strong>github.com</strong>, click the <strong>+</strong> (top right) → <strong>New repository</strong>.</li>
+      <li>Name it <strong>your-band-site</strong>. Set it to <strong>Public</strong>. Click <strong>Create</strong>.</li>
+      <li>On the new page, click <strong>"uploading an existing file."</strong></li>
+      <li>Drag your whole folder's contents in (index.html, style.css, images). Click <strong>Commit changes.</strong></li>
+    </ul>
+    <p class="note">"Repository" is just GitHub's word for your project folder. That's all it means.</p>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <div class="kicker">Step 5 · Flip the switch</div>
+    <h2>Turn on GitHub Pages</h2>
+    <ul>
+      <li>In your repository, click <strong>Settings</strong> (top menu).</li>
+      <li>On the left sidebar, click <strong>Pages</strong>.</li>
+      <li>Under "Branch," pick <strong>main</strong>, keep the folder as <strong>/ (root)</strong>, click <strong>Save.</strong></li>
+      <li>Wait about a minute. Refresh. GitHub shows you a green link.</li>
+    </ul>
+    <p class="note">That green link is your live website. Anyone on earth can open it.</p>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide">
+    <div class="kicker">You're live</div>
+    <h2>Your public address</h2>
+    <p class="lead">Every site on GitHub Pages follows the same pattern. Yours becomes:</p>
+    <span class="url-pill">yourname.github.io/your-band-site</span>
+    <p class="note">Put it on your Instagram bio. Text it to a venue. It's real and it's yours.</p>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide">
+    <div class="kicker">The part that matters most</div>
+    <h2>Updating it later</h2>
+    <ul>
+      <li>New show? New photo? Open the file in VS Code, change the words, save.</li>
+      <li>Go to your repo on github.com → click the file → click the <strong>pencil</strong> ✏️ → paste your changes → <strong>Commit.</strong></li>
+      <li>Or drag a whole new version in, same as before.</li>
+      <li>The live site updates itself in about a minute. Every single time. Free.</li>
+    </ul>
+    <p class="note">This is the whole reason to own it yourself: you're never stuck waiting on anyone.</p>
+  </section>
+
+  <!-- 12b -->
+  <section class="slide">
+    <div class="kicker">Bring in outside media</div>
+    <h2>Embed a YouTube video</h2>
+    <p class="lead" style="font-size:1.1rem;margin-bottom:.2rem">GitHub Pages never has to host the video file itself — you just embed a window into YouTube's copy.</p>
+    <div class="cols">
+      <div class="col">
+        <div class="video-wrap">
+          <iframe src="https://www.youtube.com/embed/sixudkn4fxw?start=49" title="Example video embed" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+        </div>
+        <p class="note">This is a real, live embed — not a screenshot. Same code you're about to copy.</p>
+        <ul class="mini-list">
+          <li>On YouTube: <strong>Share → Embed</strong> gives you this code.</li>
+          <li><strong>VIDEO_ID</strong> is the part of the URL after <strong>watch?v=</strong>.</li>
+          <li><strong>&amp;t=49s</strong> in a normal link becomes <strong>?start=49</strong> here — delete the <strong>?si=...</strong> tracking code YouTube adds, it isn't needed.</li>
+          <li>Delete the <strong>width="560" height="315"</strong> YouTube bakes in — the CSS wrapper controls the size instead.</li>
+        </ul>
+      </div>
+      <div class="col">
+        <div class="code" data-code="video-html">
+          <div class="code-head">
+            <span class="code-file">index.html</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+<pre><code><span class="tok-tag">&lt;div</span> <span class="tok-attr">class</span>=<span class="tok-str">"video-wrap"</span><span class="tok-tag">&gt;</span>
+  <span class="tok-tag">&lt;iframe</span> <span class="tok-attr">src</span>=<span class="tok-str">"https://www.youtube.com/embed/VIDEO_ID?start=49"</span>
+    <span class="tok-attr">title</span>=<span class="tok-str">"Band video"</span>
+    <span class="tok-attr">allow</span>=<span class="tok-str">"accelerometer; autoplay;
+      encrypted-media; gyroscope; picture-in-picture"</span>
+    <span class="tok-attr">referrerpolicy</span>=<span class="tok-str">"strict-origin-when-cross-origin"</span>
+    <span class="tok-attr">allowfullscreen</span><span class="tok-tag">&gt;&lt;/iframe&gt;</span>
+<span class="tok-tag">&lt;/div&gt;</span></code></pre>
+        </div>
+        <div class="code" data-code="video-css" style="margin-top:.9rem">
+          <div class="code-head">
+            <span class="code-file">style.css</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+<pre><code><span class="tok-com">/* keeps any video the right shape on any screen */</span>
+<span class="tok-attr">.video-wrap</span> {
+  <span class="tok-tag">position</span>: <span class="tok-str">relative</span>;
+  <span class="tok-tag">padding-bottom</span>: <span class="tok-str">56.25%</span>; <span class="tok-com">/* 16:9 */</span>
+  <span class="tok-tag">height</span>: <span class="tok-str">0</span>;
+}
+<span class="tok-attr">.video-wrap iframe</span> {
+  <span class="tok-tag">position</span>: <span class="tok-str">absolute</span>;
+  <span class="tok-tag">inset</span>: <span class="tok-str">0</span>;
+  <span class="tok-tag">width</span>: <span class="tok-str">100%</span>;
+  <span class="tok-tag">height</span>: <span class="tok-str">100%</span>;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 -->
+  <section class="slide">
+    <div class="kicker">When you get stuck</div>
+    <h2>The rules of not panicking</h2>
+    <ul>
+      <li><strong>Every open tag needs a close tag.</strong> &lt;h1&gt; needs &lt;/h1&gt;. That's 90% of bugs.</li>
+      <li><strong>File names are exact.</strong> style.css is not Style.css. images/band.jpg is not images/Band.JPG.</li>
+      <li><strong>Save the file</strong> before you refresh. VS Code shows a dot when unsaved.</li>
+      <li><strong>Change one thing, then look.</strong> Don't change ten things and wonder which broke it.</li>
+    </ul>
+    <p class="note">You don't need an AI to write this for you. You need to close your tags and save your file.</p>
+  </section>
+
+  <!-- 14 -->
+  <section class="slide">
+    <div class="kicker">Your turn</div>
+    <h1>Build the folder.<br>Ship the band.</h1>
+    <div class="cols" style="margin-top:1.2rem">
+      <div class="col">
+        <p class="lead" style="font-size:1.25rem">You now know the whole loop: write two files, style them, embed your media, test locally, then push it live. That's a real website — not a template, not a monthly bill, not someone else's platform.</p>
+        <p class="note" style="margin-top:1.3rem">By the end of this week, your band has an address on the internet that nobody can take away and nobody charges you for.</p>
+      </div>
+      <div class="col">
+        <p class="lead" style="font-size:1rem;margin-bottom:.2rem;color:var(--stone);text-transform:uppercase;letter-spacing:.08em;font-weight:600">What you're walking away with</p>
+        <ul class="mini-list">
+          <li>Compared it to Wix, Squarespace, WordPress, and Google Sites — and chose the one you actually own</li>
+          <li>Two files, <strong>index.html</strong> + <strong>style.css</strong>, that's the whole site</li>
+          <li>Real control over color, font, and size — no theme lock-in</li>
+          <li>An embedded YouTube video, with zero video hosting to manage</li>
+          <li>A live <strong>github.io</strong> URL you update yourself, forever, free</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="counter" id="counter">1 / 14</div>
+<div class="hint">← → arrow keys to move</div>
+
+<script>
+  const slides = Array.from(document.querySelectorAll('.slide'));
+  let i = 0;
+  const bar = document.getElementById('bar');
+  const counter = document.getElementById('counter');
+  function show(n){
+    i = Math.max(0, Math.min(slides.length-1, n));
+    slides.forEach((s,x)=>s.classList.toggle('active', x===i));
+    bar.style.width = ((i+1)/slides.length*100) + '%';
+    counter.textContent = (i+1) + ' / ' + slides.length;
+  }
+  document.addEventListener('keydown', e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown') show(i+1);
+    if(e.key==='ArrowLeft'||e.key==='PageUp') show(i-1);
+    if(e.key==='Home') show(0);
+    if(e.key==='End') show(slides.length-1);
+  });
+  document.getElementById('deck').addEventListener('click', e=>{
+    if(e.target.closest('.copy-btn')) return;
+    if(e.target.closest('#compareTable')) return;
+    if(e.target.closest('.css-lab')) return;
+    if(e.detail===0) return;
+    show(i+1);
+  });
+  const compareTable = document.getElementById('compareTable');
+  if(compareTable){
+    compareTable.querySelectorAll('tbody tr').forEach(row=>{
+      row.addEventListener('click', ()=>{
+        compareTable.querySelectorAll('tbody tr').forEach(r=>r.classList.remove('active'));
+        row.classList.add('active');
+      });
+    });
+  }
+  (function(){
+    const wheel = document.getElementById('colorWheel');
+    if(!wheel) return;
+    const dot = document.getElementById('wheelDot');
+    const hexBadge = document.getElementById('hexBadge');
+    const btnBg = document.getElementById('btnTargetBg');
+    const btnText = document.getElementById('btnTargetText');
+    const fontSelect = document.getElementById('fontSelect');
+    const sizeRange = document.getElementById('sizeRange');
+    const sizeLabel = document.getElementById('sizeLabel');
+    const preview = document.getElementById('labPreview');
+    const labCode = document.getElementById('labCode');
+
+    const state = { bg:'#f4f0e6', text:'#1a1a1a', font:fontSelect.value, size:sizeRange.value };
+    let target = 'bg';
+
+    function hslToHex(h,s,l){
+      s/=100; l/=100;
+      const k = n => (n+h/30)%12;
+      const a = s*Math.min(l,1-l);
+      const f = n => l - a*Math.max(-1, Math.min(k(n)-3, Math.min(9-k(n),1)));
+      const toHex = x => Math.round(255*x).toString(16).padStart(2,'0');
+      return '#'+toHex(f(0))+toHex(f(8))+toHex(f(4));
+    }
+
+    function render(){
+      preview.style.backgroundColor = state.bg;
+      preview.style.color = state.text;
+      preview.style.fontFamily = state.font;
+      preview.style.fontSize = state.size+'px';
+      sizeLabel.textContent = state.size+'px';
+      hexBadge.textContent = target==='bg' ? state.bg : state.text;
+      labCode.textContent = 'body {\n  background-color: '+state.bg+';\n  color: '+state.text+';\n  font-family: '+state.font+';\n  font-size: '+state.size+'px;\n}';
+    }
+
+    wheel.addEventListener('click', e=>{
+      const rect = wheel.getBoundingClientRect();
+      const cx = rect.width/2, cy = rect.height/2;
+      let x = e.clientX-rect.left-cx;
+      let y = e.clientY-rect.top-cy;
+      const radius = rect.width/2;
+      const dist = Math.min(Math.sqrt(x*x+y*y), radius);
+      const angle = (Math.atan2(y,x)*180/Math.PI+360)%360;
+      const scale = dist===0 ? 0 : dist/Math.sqrt(x*x+y*y);
+      x*=scale; y*=scale;
+      const sat = (dist/radius)*100;
+      const hex = hslToHex(angle, sat, 55);
+      dot.style.left = (cx+x)+'px';
+      dot.style.top = (cy+y)+'px';
+      if(target==='bg') state.bg = hex; else state.text = hex;
+      render();
+    });
+    btnBg.addEventListener('click', ()=>{
+      target='bg'; btnBg.classList.add('active'); btnText.classList.remove('active'); render();
+    });
+    btnText.addEventListener('click', ()=>{
+      target='text'; btnText.classList.add('active'); btnBg.classList.remove('active'); render();
+    });
+    fontSelect.addEventListener('change', e=>{ state.font = e.target.value; render(); });
+    sizeRange.addEventListener('input', e=>{ state.size = e.target.value; render(); });
+    render();
+  })();
+
+  function copyCode(btn){
+    const block = btn.closest('.code').querySelector('code');
+    const text = block.innerText;
+    navigator.clipboard.writeText(text).then(()=>{
+      const old = btn.textContent;
+      btn.textContent = 'Copied ✓';
+      btn.classList.add('done');
+      setTimeout(()=>{btn.textContent=old; btn.classList.remove('done');}, 1400);
+    });
+  }
+  show(0);
+</script>
