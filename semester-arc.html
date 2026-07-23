@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LHUM400: Where We've Been, Where We're Going</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --ink:      #1a1a1a;
+      --mid:      #555;
+      --light:    #888;
+      --border:   #ddd;
+      --bg:       #f7f7f5;
+      --card:     #ffffff;
+      --navy:     #1c2b4a;
+      --accent:   #2d5fa6;
+      --accent-lt:#e8eef8;
+      --radius:   10px;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+      min-height: 100vh;
+      line-height: 1.65;
+    }
+    .app-header {
+      background: var(--navy);
+      color: #fff;
+      padding: 14px 28px;
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
+    }
+    .app-header h1 { font-size: 1rem; font-weight: 600; letter-spacing: 0.02em; }
+    .app-header span { font-size: 0.8rem; opacity: 0.6; }
+    .container { max-width: 700px; margin: 0 auto; padding: 48px 24px 80px; }
+    h2 { font-size: 1.9rem; font-weight: 700; line-height: 1.2; margin-bottom: 6px; }
+    .sub { color: var(--mid); font-size: 0.95rem; margin-bottom: 30px; }
+    .timeline {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px;
+      margin-bottom: 30px;
+      overflow-x: auto;
+    }
+    .timeline img { width: 100%; min-width: 560px; height: auto; display: block; border-radius: 6px; }
+    .timeline .cap { font-size: 0.8rem; color: var(--light); margin-top: 8px; text-align: center; }
+    p.body { font-size: 1rem; margin-bottom: 18px; max-width: 66ch; }
+    .backbar { margin-top: 40px; }
+    .backbar a {
+      display: inline-block;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 18px;
+      color: var(--accent);
+      font-weight: 600;
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+    .backbar a:hover { border-color: var(--accent); background: var(--accent-lt); }
+    footer {
+      text-align: center;
+      color: var(--light);
+      font-size: 0.75rem;
+      font-style: italic;
+      padding: 24px;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <h1>LHUM400 Student Tools</h1>
+    <span>Berklee College of Music</span>
+  </header>
+
+  <main class="container">
+    <h2>Where we've been, where we're going.</h2>
+    <div class="sub">The shape of the summer, in one look and five paragraphs.</div>
+
+    <div class="timeline">
+      <img src="assets/final-stretch-timeline.png" alt="Timeline of the final stretch of LHUM400 Summer 2026: Week 9 website build and Career Intel Board, Week 10 Business and Money Day, Weeks 11 and 12 presentations and finals.">
+      <div class="cap">The final stretch, Week 9 through finals.</div>
+    </div>
+
+    <p class="body">This summer we built a foundation first, getting to know each other and naming professional habits and goals in that first readiness audit. From there we moved through professional communication tools: artist statements, resumes, and cover letters against real job postings, a fan website, and client communication case studies built from real recorded voices of working musicians. Those documents are ones you'll keep using well past this class.</p>
+
+    <p class="body">Right now we're in the business-skills stretch of the semester, where spreadsheets stop being an abstract skill and become a tool for seeing your own financial decisions clearly, real numbers mixed with hypothetical ones so you can forecast, compare gigs, or test a break-even scenario before committing to it. Alongside that, three self-directed project strands are running in parallel: interviewing a working professional, private client work you document, and your portfolio website. Those three strands are exactly where you have real freedom right now, choosing who you interview, what client work fits your direction, and how your website represents you, with class time built for peer check-ins rather than one prescribed path.</p>
+
+    <p class="body">What still needs wrapping up: the decision-making and budget spreadsheets, the private client work with its documentation, then portfolio integration, pulling everything together into a completed portfolio, a final essay on your career path, and a presentation making the case for where you're headed, alongside honest conversations about resilience and creative integrity that are meant to travel with you past finals.</p>
+
+    <p class="body">When the semester ends, the learning shouldn't. The portfolio stays live and editable, the spreadsheet habits transfer to any freelance decision you'll face, the client communication framework applies to the next real inquiry, and the network from the interview project and alumni reflection is meant to keep growing on its own. The real measure of this course isn't the grade, it's whether you keep using these tools the first time real money, a real client, or a real career fork shows up.</p>
+
+    <div class="backbar"><a href="index.html">Back to LHUM400 Student Tools</a></div>
+  </main>
+
+  <footer>Prof. Kramer Gibson, Berklee College of Music</footer>
+</body>
+</html>

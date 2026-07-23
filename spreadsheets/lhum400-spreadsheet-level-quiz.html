@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spreadsheets: Find Your Level</title>
+<style>
+  :root{
+    --cream:#f4efe6;
+    --ink:#2b2823;
+    --sage:#7a8b6f;
+    --sage-deep:#556049;
+    --ocean:#356170;
+    --clay:#b45f3e;
+    --gold:#c99a4e;
+    --paper:#fffdf8;
+    --line:#cdc4b0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  .bar{position:fixed;top:0;left:0;height:5px;background:var(--clay);transition:width .3s;z-index:20;}
+  .wrap{max-width:720px;margin:0 auto;padding:8vh 20px 80px;}
+
+  .kicker{font-size:13px;letter-spacing:.22em;text-transform:uppercase;color:var(--clay);font-weight:800;margin-bottom:.7em;text-align:center;}
+  h1{font-size:clamp(28px,5.5vw,46px);color:var(--sage-deep);line-height:1.1;text-align:center;}
+  .lead{font-size:clamp(16px,2.3vw,20px);color:#6f685c;text-align:center;max-width:44ch;margin:.7em auto 0;}
+  .startbtn{display:block;width:fit-content;margin:1.6em auto 0;background:var(--sage-deep);color:#fff;text-decoration:none;
+    font-weight:800;font-size:18px;padding:.65em 1.6em;border-radius:12px;border:none;cursor:pointer;}
+  .startbtn:active{transform:translateY(1px);}
+
+  .card{
+    background:var(--paper);border:2px solid var(--line);border-radius:18px;
+    padding:clamp(22px,4.5vw,40px);margin-top:26px;
+    box-shadow:0 4px 18px rgba(60,50,30,.05);
+  }
+  .qnum{font-size:13px;letter-spacing:.15em;text-transform:uppercase;color:var(--clay);font-weight:800;margin-bottom:.5em;}
+  .qtext{font-size:clamp(19px,3vw,26px);color:var(--sage-deep);font-weight:700;line-height:1.25;margin-bottom:.3em;}
+  .qsub{font-size:clamp(15px,2vw,17px);color:#736c60;margin-bottom:1em;}
+  code{font-family:"SF Mono",Menlo,Consolas,monospace;background:#efe7d7;color:var(--sage-deep);padding:.08em .4em;border-radius:5px;font-size:.94em;font-weight:600;}
+
+  .opts{display:flex;flex-direction:column;gap:10px;margin-top:.6em;}
+  .opts button{
+    text-align:left;font-size:clamp(16px,2.2vw,19px);font-family:inherit;color:var(--ink);
+    background:#fff;border:2px solid var(--line);border-radius:12px;
+    padding:.75em 1em;cursor:pointer;line-height:1.4;
+  }
+  .opts button:hover{border-color:var(--ocean);background:#f4f8f9;}
+  .opts button:active{transform:translateY(1px);}
+
+  .backrow{margin-top:14px;text-align:center;}
+  .backrow button{background:transparent;border:none;color:#8a8378;font-size:14px;cursor:pointer;font-family:inherit;text-decoration:underline;}
+
+  /* result */
+  .levelchip{display:inline-block;font-weight:800;font-size:14px;letter-spacing:.08em;text-transform:uppercase;
+    color:#fff;padding:.3em 1em;border-radius:20px;margin-bottom:.6em;}
+  .result h2{font-size:clamp(24px,4.2vw,36px);color:var(--sage-deep);line-height:1.15;margin-bottom:.3em;}
+  .result p{font-size:clamp(16px,2.2vw,19px);margin:.5em 0;}
+  .result p.soft{color:#736c60;}
+  .golinks{display:flex;flex-direction:column;gap:10px;margin-top:1.1em;}
+  .golinks a{
+    display:block;text-decoration:none;border-radius:12px;padding:.8em 1.1em;
+    font-size:clamp(16px,2.2vw,19px);font-weight:700;border:2px solid var(--line);color:var(--sage-deep);background:#fff;
+  }
+  .golinks a:hover{border-color:var(--ocean);}
+  .golinks a .where{display:block;font-weight:500;font-size:14px;color:#8a8378;margin-top:.15em;}
+  .golinks a.primary{background:var(--sage-deep);border-color:var(--sage-deep);color:#fff;}
+  .golinks a.primary .where{color:#d9e0d2;}
+  .retake{margin-top:1.3em;text-align:center;}
+  .retake button{background:transparent;border:2px solid var(--sage-deep);color:var(--sage-deep);
+    font-weight:700;font-size:15px;padding:.5em 1.2em;border-radius:10px;cursor:pointer;font-family:inherit;}
+
+  .hidden{display:none;}
+  footer{margin-top:60px;text-align:center;color:#8a8378;font-size:13px;}
+</style>
+</head>
+<body>
+<div class="bar" id="bar" style="width:0"></div>
+
+<div class="wrap">
+
+  <div id="intro">
+    <div class="kicker">LHUM 400 &middot; Spreadsheets</div>
+    <h1>Find your starting line.</h1>
+    <p class="lead">Eight quick questions. Not a grade, not a test you can fail; just a way to figure out where the spreadsheet material stops being boring and starts being useful to you.</p>
+    <button class="startbtn" id="start">Start</button>
+  </div>
+
+  <div id="quiz" class="hidden">
+    <div class="card">
+      <div class="qnum" id="qnum"></div>
+      <div class="qtext" id="qtext"></div>
+      <div class="qsub" id="qsub"></div>
+      <div class="opts" id="opts"></div>
+    </div>
+    <div class="backrow"><button id="back">back a question</button></div>
+  </div>
+
+  <div id="result" class="hidden">
+    <div class="card result" id="resultcard"></div>
+    <div class="retake"><button id="retake">Start over</button></div>
+  </div>
+
+  <footer>Prof. Kramer Gibson - Berklee College of Music</footer>
+</div>
+
+<script>
+const QUESTIONS=[
+  {
+    q:'You click a box that shows 250, and the bar above the grid reads <code>=B1+B2+B3</code>. What is that box actually holding?',
+    sub:'',
+    opts:[
+      ['The number 250',0],
+      ['A recipe that currently cooks to 250',1],
+      ['An error someone forgot to fix',0],
+    ]
+  },
+  {
+    q:'What does <code>=B2*12</code> do?',
+    sub:'',
+    opts:[
+      ['Shows the text "B2*12"',0],
+      ['Multiplies whatever is in B2 by 12, and keeps doing it when B2 changes',1],
+      ['Nothing without an internet connection',0],
+    ]
+  },
+  {
+    q:'What does <code>B1:B10</code> mean?',
+    sub:'',
+    opts:[
+      ['B1 divided by B10',0],
+      ['The boxes B1 through B10, as a group',1],
+      ['A time, ten past one',0],
+    ]
+  },
+  {
+    q:'You need the total of 200 numbers sitting in column B. Your move?',
+    sub:'',
+    opts:[
+      ['Type them all into the phone calculator',0],
+      ['<code>=B1+B2+B3...</code> all the way down',0],
+      ['<code>=SUM(B1:B200)</code>',1],
+    ]
+  },
+  {
+    q:'A box holds <code>=IF(B1>=60, "GO", "WAIT")</code> and B1 is 45. What shows?',
+    sub:'',
+    opts:[
+      ['GO',0],
+      ['WAIT',1],
+      ['45',0],
+    ]
+  },
+  {
+    q:'You copy a formula down a column and every row correctly uses its own numbers. But you need each row to also multiply by the one tax rate sitting in F1. What keeps F1 from shifting as the formula copies?',
+    sub:'This one separates the middle of the ladder from the top. "Not yet" is a fine answer.',
+    opts:[
+      ['Write it as <code>$F$1</code>',2],
+      ['Paste the tax rate into every row by hand',0],
+      ['Not yet met this problem',0],
+    ]
+  },
+  {
+    q:'A pivot table is for...',
+    sub:'',
+    opts:[
+      ['Summarizing hundreds of rows by category in a few clicks',2],
+      ['Rotating text sideways',0],
+      ['Honestly, we have not met',0],
+    ]
+  },
+  {
+    q:'The most complicated thing you have personally built in a spreadsheet:',
+    sub:'Be honest; the answer only decides where you start, not how far you go.',
+    opts:[
+      ['Nothing yet, or typing numbers into someone else\'s sheet',0],
+      ['A sheet with my own working formulas (totals, a budget, a tracker)',1],
+      ['A sheet with lookups, charts, or IF logic that other people actually used',2],
+    ]
+  },
+];
+
+const LEVELS=[
+  {
+    min:0, max:4, chip:'Level 0 to Simple', color:'var(--clay)',
+    title:'Start at the very beginning.',
+    body:'Good news: the walkthrough was written for exactly you, and the first rungs go fast.  Grids you can practice in, nothing you can break, and by scenario two you will be building a real budget.',
+    soft:'Skip nothing; the early steps are short and everything later stands on them.',
+    links:[
+      ['lhum400-spreadsheet-walkthrough.html#s0','Start the walkthrough at Level 0','Practice grids, from the first click',1],
+      ['lhum400-spreadsheet-walkthrough.html#examples','Peek at the simple example sheets','See where you are headed',0],
+    ]
+  },
+  {
+    min:5, max:8, chip:'Intermediate', color:'var(--ocean)',
+    title:'Skip ahead to the ladder.',
+    body:'You know what a formula is; what you need is reps on real questions.  The scenario ladder starts at a pizza budget and ends at a break-even model with a GO or RISKY verdict.  Climb until one bites.',
+    soft:'If Step 7 (IF and comparisons) is new to you, grab it on the way down; it unlocks the best rungs.',
+    links:[
+      ['lhum400-spreadsheet-walkthrough.html#ladder','Jump to the scenario ladder','Seven real questions, live grids',1],
+      ['lhum400-spreadsheet-walkthrough.html#examples','Open the intermediate example sheet','A real budget tracker to dissect',0],
+    ]
+  },
+  {
+    min:9, max:99, chip:'Advanced', color:'var(--sage-deep)',
+    title:'Go straight to the deep end.',
+    body:'You do not need the on-ramp.  Open the advanced example sheets and read them the way you would read someone else\'s code: find the inputs, trace the chains, figure out why the designer split things across tabs.  Then build a model for a question of your own.',
+    soft:'The break-even and cost-per-year scenarios on the ladder are still worth five minutes; the modeling patterns transfer.',
+    links:[
+      ['lhum400-spreadsheet-walkthrough.html#examples','Open the advanced example sheets','Full budgeting systems and a loan amortizer',1],
+      ['lhum400-spreadsheet-walkthrough.html#sc6','Skim the break-even scenario','A decision model in six rows',0],
+    ]
+  },
+];
+
+let idx=0;
+const answers=new Array(QUESTIONS.length).fill(null);
+const $=id=>document.getElementById(id);
+
+function showQuestion(){
+  $('intro').classList.add('hidden');
+  $('result').classList.add('hidden');
+  $('quiz').classList.remove('hidden');
+  const q=QUESTIONS[idx];
+  $('qnum').textContent='Question '+(idx+1)+' of '+QUESTIONS.length;
+  $('qtext').innerHTML=q.q;
+  $('qsub').textContent=q.sub;
+  $('qsub').style.display=q.sub?'block':'none';
+  const opts=$('opts');
+  opts.innerHTML='';
+  q.opts.forEach((o,n)=>{
+    const b=document.createElement('button');
+    b.innerHTML=o[0];
+    b.onclick=()=>{answers[idx]=n;next();};
+    opts.appendChild(b);
+  });
+  $('back').style.visibility=idx>0?'visible':'hidden';
+  $('bar').style.width=(idx/QUESTIONS.length*100)+'%';
+}
+
+function next(){
+  if(idx<QUESTIONS.length-1){idx++;showQuestion();}
+  else showResult();
+}
+
+function showResult(){
+  $('quiz').classList.add('hidden');
+  $('result').classList.remove('hidden');
+  $('bar').style.width='100%';
+  let score=0;
+  QUESTIONS.forEach((q,n)=>{if(answers[n]!=null)score+=q.opts[answers[n]][1];});
+  const lv=LEVELS.find(l=>score>=l.min&&score<=l.max)||LEVELS[0];
+  const links=lv.links.map(L=>
+    '<a href="'+L[0]+'"'+(L[3]?' class="primary"':'')+'>'+L[1]+'<span class="where">'+L[2]+'</span></a>'
+  ).join('');
+  $('resultcard').innerHTML=
+    '<span class="levelchip" style="background:'+lv.color+'">'+lv.chip+'</span>'+
+    '<h2>'+lv.title+'</h2>'+
+    '<p>'+lv.body+'</p>'+
+    '<p class="soft">'+lv.soft+'</p>'+
+    '<div class="golinks">'+links+'</div>'+
+    '<p class="soft" style="margin-top:1.1em">Wrong fit?  Move freely.  The levels are doors, not walls.</p>';
+}
+
+$('start').onclick=()=>{idx=0;answers.fill(null);showQuestion();};
+$('back').onclick=()=>{if(idx>0){idx--;showQuestion();}};
+$('retake').onclick=()=>{idx=0;answers.fill(null);$('result').classList.add('hidden');$('intro').classList.remove('hidden');$('bar').style.width='0';};
+</script>
+</body>
+</html>

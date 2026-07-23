@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spreadsheets: A Hands-On Walkthrough</title>
+<style>
+  :root{
+    --cream:#f4efe6;
+    --ink:#2b2823;
+    --sage:#7a8b6f;
+    --sage-deep:#556049;
+    --ocean:#356170;
+    --clay:#b45f3e;
+    --gold:#c99a4e;
+    --paper:#fffdf8;
+    --line:#cdc4b0;
+    --label:#8a6d55;
+    --labelbg:#f3ece0;
+    --inputc:#2b2823;
+    --formc:#356170;
+    --formbg:#e7eef1;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:900px;margin:0 auto;padding:0 20px 110px;}
+
+  header.hero{
+    text-align:center;
+    padding:8vh 20px 5vh;
+    background:linear-gradient(180deg,#eef2e8 0%,var(--cream) 100%);
+    border-bottom:2px solid var(--line);
+  }
+  .kicker{font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--clay);font-weight:800;margin-bottom:.7em;}
+  header.hero h1{font-size:clamp(32px,6vw,56px);color:var(--sage-deep);line-height:1.05;}
+  header.hero p{font-size:clamp(17px,2.5vw,22px);color:#6f685c;max-width:32ch;margin:.6em auto 0;}
+  .startbtn{display:inline-block;margin-top:1.4em;background:var(--sage-deep);color:#fff;text-decoration:none;
+    font-weight:800;font-size:18px;padding:.65em 1.5em;border-radius:12px;}
+  .startbtn:active{transform:translateY(1px);}
+
+  section.step{
+    background:var(--paper);
+    border:2px solid var(--line);
+    border-radius:18px;
+    padding:clamp(20px,4vw,38px);
+    margin-top:30px;
+    box-shadow:0 4px 18px rgba(60,50,30,.05);
+  }
+  .stepnum{display:inline-block;background:var(--clay);color:#fff;font-weight:800;font-size:14px;
+    padding:.25em .8em;border-radius:20px;letter-spacing:.06em;margin-bottom:.6em;}
+  .stepnum.zero{background:var(--ocean);}
+  .stepnum.scen{background:var(--sage-deep);}
+  section.step h2{font-size:clamp(24px,3.8vw,36px);color:var(--sage-deep);line-height:1.12;margin-bottom:.3em;}
+  section.step p{font-size:clamp(16px,2.1vw,19px);color:var(--ink);margin:.5em 0;max-width:62ch;}
+  section.step p.soft{color:#736c60;}
+  .accent{color:var(--ocean);font-weight:700;}
+  .clayx{color:var(--clay);font-weight:700;}
+  code,.mono{font-family:"SF Mono",Menlo,Consolas,monospace;}
+  p code,li code{background:#efe7d7;color:var(--sage-deep);padding:.08em .4em;border-radius:5px;font-size:.92em;font-weight:600;}
+  ul.plain{list-style:none;margin:.5em 0;}
+  ul.plain li{font-size:clamp(16px,2.1vw,19px);margin:.4em 0;padding-left:1.5em;position:relative;}
+  ul.plain li::before{content:"→";position:absolute;left:0;color:var(--sage);font-weight:800;}
+  ol.steps{margin:.5em 0 .5em 1.3em;}
+  ol.steps li{font-size:clamp(16px,2.1vw,19px);margin:.4em 0;padding-left:.2em;}
+
+  .legend{display:flex;gap:12px;flex-wrap:wrap;margin:1em 0 .4em;}
+  .legend .chip{flex:1;min-width:170px;border-radius:12px;padding:.7em .9em;border:2px solid var(--line);}
+  .legend .chip b{display:block;font-size:17px;margin-bottom:.1em;}
+  .legend .chip span{font-size:14px;color:#6f685c;}
+  .chip.lab{background:var(--labelbg);border-color:#e0cfb8;} .chip.lab b{color:var(--label);}
+  .chip.inp{background:#fff;border-color:#cfc6b2;} .chip.inp b{color:var(--inputc);}
+  .chip.frm{background:var(--formbg);border-color:#bcd2da;} .chip.frm b{color:var(--formc);}
+
+  /* live mini-sheet */
+  .sheet{margin:1em 0 .3em;border:2px solid var(--line);border-radius:14px;overflow:hidden;background:#fff;max-width:620px;}
+  .sheet .toolbar{display:flex;align-items:stretch;border-bottom:2px solid var(--line);background:#faf6ee;}
+  .sheet .namebox{font-family:"SF Mono",Menlo,monospace;font-weight:800;color:var(--sage-deep);
+    min-width:58px;display:flex;align-items:center;justify-content:center;border-right:2px solid var(--line);font-size:15px;padding:0 6px;}
+  .sheet .fx{color:var(--clay);font-weight:800;font-style:italic;padding:0 10px;display:flex;align-items:center;font-family:Georgia,serif;}
+  .sheet .fbar{flex:1;border:none;background:transparent;font-family:"SF Mono",Menlo,monospace;
+    font-size:16px;padding:10px 4px;color:var(--ink);outline:none;min-width:0;}
+  .sheet .fbar:focus{background:#fffbe9;}
+  .sheet .fenter{border:none;background:var(--sage-deep);color:#fff;font-weight:800;font-size:15px;padding:0 14px;cursor:pointer;}
+  .sheet .fenter:active{transform:translateY(1px);}
+  .sheet .gridscroll{overflow-x:auto;}
+  .sheet .gridscroll:focus{outline:none;}
+  table.ss{border-collapse:collapse;width:100%;table-layout:fixed;}
+  table.ss th,table.ss td{border:1px solid #ddd4c1;height:46px;text-align:center;font-size:clamp(15px,2.1vw,19px);}
+  table.ss th{background:#ece4d2;color:#7a7360;font-weight:700;font-family:"SF Mono",Menlo,monospace;width:76px;}
+  table.ss th.corner{background:#e2d9c5;}
+  table.ss td{cursor:cell;padding:0 8px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;background:#fff;user-select:none;}
+  table.ss td.t-label{background:var(--labelbg);color:var(--label);font-style:italic;text-align:left;}
+  table.ss td.t-num{color:var(--inputc);font-weight:700;text-align:right;}
+  table.ss td.t-form{background:var(--formbg);color:var(--formc);font-weight:700;text-align:right;}
+  table.ss td.t-err{background:#f7e3dc;color:var(--clay);font-weight:700;text-align:right;}
+  table.ss td.sel{outline:3px solid var(--clay);outline-offset:-3px;position:relative;z-index:2;}
+  table.ss td.inrange{box-shadow:inset 0 0 0 40px rgba(53,97,112,.10);}
+  table.ss td .ced{width:100%;height:100%;border:none;outline:none;background:#fffbe9;
+    font-family:"SF Mono",Menlo,monospace;font-size:inherit;text-align:inherit;padding:0 6px;color:var(--ink);}
+  .sheet .hintbar{font-size:13px;color:#8a8378;padding:6px 12px;border-top:1px dashed var(--line);background:#faf6ee;}
+
+  .sheettools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:.3em 0 0;}
+  .sheettools button{border:none;font-weight:700;font-size:15px;padding:.5em 1.1em;border-radius:10px;cursor:pointer;}
+  .btn-check{background:var(--ocean);color:#fff;}
+  .btn-reset{background:transparent;color:var(--sage-deep);border:2px solid var(--sage-deep)!important;}
+  .sheettools button:active{transform:translateY(1px);}
+  .checkmsg{font-size:15px;font-weight:700;margin-top:.4em;min-height:1.1em;}
+  .checkmsg .ok{color:var(--sage-deep);} .checkmsg .no{color:var(--clay);}
+  .checkline{display:block;font-size:14px;font-weight:600;margin:.15em 0;}
+
+  .callout{background:#f1ede2;border-left:5px solid var(--gold);border-radius:0 10px 10px 0;padding:.7em 1em;margin:.9em 0;font-size:clamp(15px,2vw,18px);}
+  .callout b{color:var(--sage-deep);}
+  .goalbox{background:#fff;border:2px solid var(--ocean);border-radius:12px;padding:.6em 1em;margin:.7em 0;font-size:clamp(15px,2vw,18px);}
+  .goalbox b{color:var(--ocean);}
+  .qline{font-family:Georgia,serif;font-style:italic;font-size:clamp(17px,2.4vw,22px);color:var(--ocean);margin:.2em 0 .5em;}
+
+  .levelnav{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-top:1.5em;}
+  .levelnav a{text-decoration:none;font-weight:700;font-size:15px;padding:.55em 1.1em;border-radius:20px;
+    border:2px solid var(--line);color:var(--sage-deep);background:var(--paper);}
+  .levelnav a:hover{border-color:var(--ocean);}
+  .levelnav a.quiz{border-color:var(--clay);color:var(--clay);}
+
+  .excard{border:2px solid var(--line);border-radius:14px;padding:1em 1.2em;margin:.9em 0;background:#fff;}
+  .excard .exlevel{display:inline-block;font-weight:800;font-size:12px;letter-spacing:.08em;text-transform:uppercase;
+    color:#fff;padding:.25em .9em;border-radius:16px;margin-bottom:.4em;}
+  .excard h3{font-size:clamp(18px,2.6vw,23px);color:var(--sage-deep);margin:.1em 0 .2em;}
+  .excard p{font-size:clamp(15px,2vw,17px);margin:.35em 0;}
+  .excard a.exlink{color:var(--ocean);font-weight:700;}
+
+  .ladder{background:linear-gradient(180deg,#eef2e8,transparent);border:none;box-shadow:none;text-align:center;}
+  .ladder h2{margin-bottom:.4em;}
+  .ladder p{margin-left:auto;margin-right:auto;}
+
+  footer.end{text-align:center;padding:6vh 20px 3vh;color:#8a8378;}
+  footer.end .big{font-size:clamp(21px,3.5vw,32px);color:var(--sage-deep);font-weight:800;margin-bottom:.2em;}
+
+  .toplink{position:fixed;bottom:20px;right:20px;background:var(--sage-deep);color:#fff;text-decoration:none;
+    width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;
+    box-shadow:0 3px 10px rgba(0,0,0,.2);z-index:30;}
+</style>
+</head>
+<body>
+
+<header class="hero" id="top">
+  <div class="kicker">LHUM 400 &middot; Hands-On</div>
+  <h1>Spreadsheets, from the first click.</h1>
+  <p>You bring a question. The grid holds the numbers and shows you the answer. Practice right here; the grids on this page really work.</p>
+  <a class="startbtn" href="#s0">Start &darr;</a>
+  <nav class="levelnav" aria-label="jump to your level">
+    <a href="#s0">New here? Level 0</a>
+    <a href="#ladder">Know the basics? The ladder</a>
+    <a href="#examples">Fluent? Example sheets</a>
+    <a class="quiz" href="lhum400-spreadsheet-level-quiz.html">Not sure? 2-minute quiz</a>
+    <a href="lhum400-spreadsheet-explorations.html">Videos: 3 short explorations</a>
+  </nav>
+</header>
+
+<div class="wrap">
+
+  <section class="step" id="s0">
+    <span class="stepnum zero">LEVEL 0</span>
+    <h2>What is this thing?</h2>
+    <p>A spreadsheet is a grid of boxes. Each box can hold a word or a number. And any box can do math using the other boxes.</p>
+    <p>People kept grids like this on paper for centuries: one row per thing, one column per fact about it. Rent here, groceries there, total at the bottom. The digital version keeps the same shape and adds one superpower: when a number changes, every total that depends on it updates itself. Instantly. Without being asked.</p>
+    <p class="soft">If you have never opened a spreadsheet in your life, you are in exactly the right place. This page assumes nothing.</p>
+  </section>
+
+  <section class="step" id="s0b">
+    <span class="stepnum zero">LEVEL 0</span>
+    <h2>Why bother?</h2>
+    <p>Your head can hold maybe four numbers before they start trading places. A grid holds all of them, in daylight, at once.</p>
+    <p>But the math is not really the point. The point is the question underneath it. Can I afford this move? Which gig is actually worth my Saturday? Where does my money go every month? Questions like these feel foggy when they live in your head. Put the numbers in a grid and the fog lifts: the question becomes something you can look at, poke, and answer.</p>
+    <div class="callout"><b>The working idea for this whole page:</b> a spreadsheet puts light on a question, so the action you take next is a smarter one. Data first, decision second.</div>
+  </section>
+
+  <section class="step" id="s1">
+    <span class="stepnum">HOW THIS WORKS</span>
+    <h2>The grids below are real.</h2>
+    <ul class="plain">
+      <li><b>Click a box</b> to select it. Its contents show in the bar above the grid.</li>
+      <li><b>Type in the bar</b> and press Enter. Or <b>double-click a box</b> to type inside it.</li>
+      <li>Nothing can break. Press <b>Reset</b> any time.</li>
+    </ul>
+  </section>
+
+  <section class="step" id="s2">
+    <span class="stepnum">STEP 1</span>
+    <h2>Every box has an address.</h2>
+    <p>Columns are <b>letters</b>, rows are <b>numbers</b>. A box's address is column + row, like <code>B2</code>. Think of a seat at a show: section B, row 2. The address is how you find one box among many, and later it is how formulas find each other.</p>
+    <p class="soft">Click the box in column C, row 3. The little bar on the left should read <code>C3</code>.</p>
+    <div class="sheet" data-sheet='{"id":"explore","cols":3,"rows":3}'></div>
+  </section>
+
+  <section class="step" id="s2b">
+    <span class="stepnum">STEP 2</span>
+    <h2>Type your first number.</h2>
+    <ol class="steps">
+      <li>Click <code>B1</code>.</li>
+      <li>Type <code>42</code> and press Enter.</li>
+    </ol>
+    <p>Two things happened. The number got saved into the box, and the selection dropped down one row, ready for the next entry. That little hop is why data entry in a spreadsheet goes fast.</p>
+    <p>Now click <code>A1</code> and type <code>Coffee</code>. Notice the grid treats it differently: words sit on the left, numbers sit on the right. The grid already knows which is which.</p>
+    <p class="soft">Made a mess? Click any box and press Delete to clear it, or just retype. Nothing here is precious.</p>
+    <div class="sheet" data-sheet='{"id":"firsttype","cols":3,"rows":3,
+      "goals":[{"cell":"B1","expected":42,"label":"B1 holds the number 42"}]}'></div>
+  </section>
+
+  <section class="step" id="s3">
+    <span class="stepnum">STEP 3</span>
+    <h2>A box does one of three jobs.</h2>
+    <div class="legend">
+      <div class="chip lab"><b>Label</b><span>Words that name things: "Rent", "Total". No math.</span></div>
+      <div class="chip inp"><b>Input</b><span>A number you type and can change.</span></div>
+      <div class="chip frm"><b>Formula</b><span>A calculation that starts with <code>=</code>.</span></div>
+    </div>
+    <p>Column A is all <span style="color:var(--label);font-style:italic;">labels</span>. <code>B1</code> and <code>B2</code> are <span style="font-weight:700;">inputs</span>. <code>B3</code> is a <span style="color:var(--formc);font-weight:700;">formula</span>. The colors match the jobs.</p>
+    <div class="sheet" data-sheet='{"id":"jobs","cols":3,"rows":3,"seed":{"A1":"Friday","B1":"100","A2":"Saturday","B2":"150","A3":"Weekend","B3":"=B1+B2"}}'></div>
+    <p class="soft">Change <code>B1</code> and watch <code>B3</code> update itself. You never touched B3.</p>
+  </section>
+
+  <section class="step" id="s4">
+    <span class="stepnum">STEP 4</span>
+    <h2>Formulas start with <span class="clayx">=</span></h2>
+    <p>The <code>=</code> tells the box to calculate instead of just holding what you typed. Here is what happens, in slow motion, when you press Enter on <code>=B1+B2</code>:</p>
+    <ol class="steps">
+      <li>The box reads the recipe: "go get B1, go get B2, add them."</li>
+      <li>It fetches those values and does the math.</li>
+      <li>It shows the result, and it remembers the recipe.</li>
+    </ol>
+    <p>That last part matters. The box does not store the answer. It stores the recipe, and re-cooks it any time an ingredient changes.</p>
+    <ul class="plain">
+      <li><code>=B1+B2</code> adds &middot; <code>=B1-B2</code> subtracts</li>
+      <li><code>=B1*3</code> multiplies &middot; <code>=B1/2</code> divides</li>
+    </ul>
+    <p class="soft">Click <b>B3</b>, type <code>=B1+B2</code>, press Enter. It should turn blue and show <b>13</b>.</p>
+    <div class="sheet" data-sheet='{"id":"firstformula","cols":3,"rows":3,
+      "seed":{"A1":"First","B1":"8","A2":"Second","B2":"5","A3":"Sum"},
+      "goals":[{"cell":"B3","expected":13,"requireFormula":true,"label":"B3 adds B1 and B2"}]}'></div>
+    <div class="callout"><b>Point, don't type.</b> <code>=8+5</code> also gives 13, but it is a dead end: change your numbers and it sits there, wrong. <code>=B1+B2</code> points at the boxes, so it stays true no matter what you put in them. Pointing is the whole trick.</div>
+  </section>
+
+  <section class="step" id="s5">
+    <span class="stepnum">STEP 5</span>
+    <h2>Add a whole column: the range.</h2>
+    <p>A <b>range</b> is a run of boxes: <code>B1:B3</code> means B1 through B3. Feed it to <code>SUM</code>.</p>
+    <p class="soft">Click <b>C1</b>, type <code>=SUM(B1:B3)</code>, press Enter. You should get <b>60</b>. (Tip: click-drag down column B to see a range in the bar.)</p>
+    <div class="sheet" data-sheet='{"id":"range","cols":3,"rows":3,
+      "seed":{"A1":"Mon","B1":"10","A2":"Tue","B2":"20","A3":"Wed","B3":"30"},
+      "goals":[{"cell":"C1","expected":60,"requireFormula":true,"label":"C1 sums B1:B3"}]}'></div>
+  </section>
+
+  <section class="step" id="s6">
+    <span class="stepnum">STEP 6</span>
+    <h2>Ask a column some questions.</h2>
+    <p>SUM has cousins, and each one answers a different question about the same pile of numbers:</p>
+    <ul class="plain">
+      <li><code>=AVERAGE(B1:B5)</code> &middot; what's typical?</li>
+      <li><code>=MIN(B1:B5)</code> &middot; what's the worst day?</li>
+      <li><code>=MAX(B1:B5)</code> &middot; what's the best?</li>
+      <li><code>=COUNT(B1:B5)</code> &middot; how many entries are there?</li>
+    </ul>
+    <p>Below: minutes of practice, Monday through Friday. In <code>C1</code>, type <code>=AVERAGE(B1:B5)</code>. You should get <b>24</b>.</p>
+    <div class="sheet" data-sheet='{"id":"colquestions","cols":3,"rows":5,
+      "seed":{"A1":"Mon","B1":"20","A2":"Tue","B2":"45","A3":"Wed","B3":"0","A4":"Thu","B4":"30","A5":"Fri","B5":"25"},
+      "goals":[{"cell":"C1","expected":24,"requireFormula":true,"label":"C1 averages the week"}]}'></div>
+    <p class="soft">Now change Wednesday's 0 to 60 and watch the average jump. One unusual day can drag a whole average around. That is worth knowing before you trust any average, including the ones in headlines.</p>
+  </section>
+
+  <section class="step" id="s7">
+    <span class="stepnum">STEP 7</span>
+    <h2>Teach a box to decide: IF.</h2>
+    <p><code>IF</code> asks a yes-or-no question and shows one answer or the other:</p>
+    <p><code>=IF(test, answer if yes, answer if no)</code></p>
+    <p>The test uses comparison signs: <code>&gt;</code> more than, <code>&lt;</code> less than, <code>&gt;=</code> at least, <code>&lt;=</code> at most. Words in a formula go inside straight double quotes, like <code>"OK"</code>.</p>
+    <p class="soft">B1 holds what's left of a budget. Click <b>C1</b> and type <code>=IF(B1&gt;=0, "OK", "OVER")</code>. Then change B1 to <code>-40</code> and watch the verdict flip.</p>
+    <div class="sheet" data-sheet='{"id":"iftry","cols":3,"rows":2,
+      "seed":{"A1":"Left over","B1":"250"},
+      "goals":[{"cell":"C1","expected":"OK","requireFormula":true,"label":"C1 shows OK when B1 is 0 or more"}]}'></div>
+    <p class="soft">A box that watches a number and raises a flag when it crosses a line: that is the seed of every dashboard you have ever seen.</p>
+  </section>
+
+  <section class="step ladder" id="ladder">
+    <h2>Now, the ladder.</h2>
+    <p>Everything below is a real question someone in this room could be asking this semester. Each one starts foggy and ends as a number you can act on. Climb until one of them bites.</p>
+  </section>
+
+  <section class="step" id="sc1">
+    <span class="stepnum scen">SCENARIO 1</span>
+    <p class="qline">What can the band afford?</p>
+    <h2>The pizza question.</h2>
+    <p>Labels are done. Fill the inputs, write two formulas.</p>
+    <ol class="steps">
+      <li>Inputs: <code>B1</code> players (4), <code>B2</code> hours (1), <code>B3</code> rate (15).</li>
+      <li><code>B4</code>: <code>=B1*B2*B3</code> (total earned).</li>
+      <li><code>B5</code>: <code>=B4/18</code> (pizzas at $18).</li>
+    </ol>
+    <div class="goalbox"><b>Target:</b> $60 earned, about 3.33 pizzas.</div>
+    <div class="sheet" data-sheet='{"id":"pizza","cols":2,"rows":5,
+      "seed":{"A1":"Players","A2":"Hours","A3":"$ per player/hr","A4":"Total earned","A5":"Pizzas at $18"},
+      "goals":[
+        {"cell":"B4","expected":60,"requireFormula":true,"label":"B4 = players x hours x rate"},
+        {"cell":"B5","expected":3.33,"tol":0.02,"requireFormula":true,"label":"B5 = earned / 18"}
+      ]}'></div>
+    <p class="soft">Now change Hours to 3. Both answers jump, and nobody redid any math. That is the machine working for you.</p>
+  </section>
+
+  <section class="step" id="sc2">
+    <span class="stepnum scen">SCENARIO 2</span>
+    <p class="qline">Where does the month actually go?</p>
+    <h2>A one-month budget.</h2>
+    <p>Money in, money out, what's left.</p>
+    <ol class="steps">
+      <li><code>B4</code> ("Spent"): <code>=SUM(B2:B3)</code>.</li>
+      <li><code>B5</code> ("Left over"): <code>=B1-B4</code>.</li>
+    </ol>
+    <div class="goalbox"><b>Target:</b> Spent 950, Left over 250.</div>
+    <div class="sheet" data-sheet='{"id":"budget","cols":2,"rows":5,
+      "seed":{"A1":"Income","B1":"1200","A2":"Rent","B2":"700","A3":"Food","B3":"250","A4":"Spent","A5":"Left over"},
+      "goals":[
+        {"cell":"B4","expected":950,"requireFormula":true,"label":"B4 sums the expenses"},
+        {"cell":"B5","expected":250,"requireFormula":true,"label":"B5 = income minus spent"}
+      ]}'></div>
+    <p class="soft">"Left over" reads from "Spent," which reads from the expenses. Change Rent and the change flows all the way down. Chains like this are how big models are built: each box asks the one before it.</p>
+  </section>
+
+  <section class="step" id="sc3">
+    <span class="stepnum scen">SCENARIO 3</span>
+    <p class="qline">When can I actually have the gear?</p>
+    <h2>Forecast a savings goal.</h2>
+    <p>You want $600 for gear, saving $40 a week.</p>
+    <ol class="steps">
+      <li><code>B3</code> ("Saved so far"): <code>=B1*B2</code>.</li>
+      <li><code>B5</code> ("Still need"): <code>=B4-B3</code>.</li>
+    </ol>
+    <div class="goalbox"><b>Target:</b> Saved 480, Still need 120.</div>
+    <div class="sheet" data-sheet='{"id":"savings","cols":2,"rows":5,
+      "seed":{"A1":"Save per week","B1":"40","A2":"Weeks","B2":"12","A3":"Saved so far","A4":"Goal","B4":"600","A5":"Still need"},
+      "goals":[
+        {"cell":"B3","expected":480,"requireFormula":true,"label":"B3 = weekly x weeks"},
+        {"cell":"B5","expected":120,"requireFormula":true,"label":"B5 = goal minus saved"}
+      ]}'></div>
+    <p class="soft">Change Weeks until "Still need" hits 0. You just ran a forecast: same grid, pointed at the future instead of the past.</p>
+  </section>
+
+  <section class="step" id="sc4">
+    <span class="stepnum scen">SCENARIO 4</span>
+    <p class="qline">What do the little monthly charges really cost?</p>
+    <h2>The subscription audit.</h2>
+    <p>Small monthly numbers hide their real size. Multiply by 12 and they come out of hiding.</p>
+    <ol class="steps">
+      <li><code>B4</code> ("Per month"): <code>=SUM(B1:B3)</code>.</li>
+      <li><code>B5</code> ("Per year"): <code>=B4*12</code>.</li>
+    </ol>
+    <div class="goalbox"><b>Target:</b> 25 per month, 300 per year.</div>
+    <div class="sheet" data-sheet='{"id":"subs","cols":2,"rows":5,
+      "seed":{"A1":"Streaming","B1":"12","A2":"Cloud storage","B2":"3","A3":"Sample packs","B3":"10","A4":"Per month","A5":"Per year"},
+      "goals":[
+        {"cell":"B4","expected":25,"requireFormula":true,"label":"B4 totals the month"},
+        {"cell":"B5","expected":300,"requireFormula":true,"label":"B5 = monthly x 12"}
+      ]}'></div>
+    <p class="soft">300 dollars is a decent microphone. Delete one row's number and watch the year shrink. If you just felt a little tug about which one to cut, notice what happened: the data asked you a question you were not asking yourself.</p>
+  </section>
+
+  <section class="step" id="sc5">
+    <span class="stepnum scen">SCENARIO 5</span>
+    <p class="qline">Which gig actually pays better?</p>
+    <h2>Compare two options side by side.</h2>
+    <p>Gig A pays $120 for a 3-hour night, door to door. Gig B pays $200 but eats 6 hours with the drive. Put each option in its own column and ask the same question of both.</p>
+    <ol class="steps">
+      <li><code>B3</code> (Gig A per hour): <code>=B1/B2</code>.</li>
+      <li><code>C3</code> (Gig B per hour): <code>=C1/C2</code>.</li>
+    </ol>
+    <div class="goalbox"><b>Target:</b> Gig A 40 per hour, Gig B about 33.33.</div>
+    <div class="sheet" data-sheet='{"id":"gigs","cols":3,"rows":3,
+      "seed":{"A1":"Pay","B1":"120","C1":"200","A2":"Hours (door to door)","B2":"3","C2":"6","A3":"Per hour"},
+      "goals":[
+        {"cell":"B3","expected":40,"requireFormula":true,"label":"B3 = Gig A pay / hours"},
+        {"cell":"C3","expected":33.33,"tol":0.02,"requireFormula":true,"label":"C3 = Gig B pay / hours"}
+      ]}'></div>
+    <p class="soft">The bigger check lost. The flat fee was hiding the drive, and the per-hour number put light on it. This is the pattern for comparing anything: apartments, laptops, tour routings. One column per option, one row per fact, one formula asked of every column.</p>
+  </section>
+
+  <section class="step" id="sc6">
+    <span class="stepnum scen">SCENARIO 6</span>
+    <p class="qline">How many tickets until the show pays for itself?</p>
+    <h2>Break-even, with a verdict.</h2>
+    <p>You are thinking about renting a room for a show. The room holds 40 people. Three formulas take you from costs to a straight answer.</p>
+    <ol class="steps">
+      <li><code>B4</code> ("Total cost"): <code>=B1+B2</code>.</li>
+      <li><code>B5</code> ("Tickets to break even"): <code>=B4/B3</code>.</li>
+      <li><code>B6</code> ("Verdict"): <code>=IF(B5&lt;=40, "GO", "RISKY")</code>.</li>
+    </ol>
+    <div class="goalbox"><b>Target:</b> cost 240, break-even 30 tickets, verdict GO.</div>
+    <div class="sheet" data-sheet='{"id":"breakeven","cols":2,"rows":6,
+      "seed":{"A1":"Room","B1":"150","A2":"Sound tech","B2":"90","A3":"Ticket price","B3":"8","A4":"Total cost","A5":"Tickets to break even","A6":"Verdict"},
+      "goals":[
+        {"cell":"B4","expected":240,"requireFormula":true,"label":"B4 adds the costs"},
+        {"cell":"B5","expected":30,"requireFormula":true,"label":"B5 = cost / ticket price"},
+        {"cell":"B6","expected":"GO","requireFormula":true,"label":"B6 says GO when break-even fits the room"}
+      ]}'></div>
+    <p class="soft">Now raise the room to 250 and watch the verdict flip. The sheet is not deciding for you. It is showing you exactly where the line sits, so you can argue with the inputs instead of with your gut. Want the show to work? Now you know your levers: a cheaper room, a higher ticket, or a bigger venue.</p>
+  </section>
+
+  <section class="step" id="sc7">
+    <span class="stepnum scen">SCENARIO 7</span>
+    <p class="qline">Is the cheap one actually cheaper?</p>
+    <h2>Cost per year of owning.</h2>
+    <p>A $60 audio interface that dies in 2 years, or a $180 one that runs for 8? The sticker answers "what leaves my pocket today." Cost per year answers "what does owning this really cost." Different question, sometimes a different winner.</p>
+    <ol class="steps">
+      <li><code>B3</code>: <code>=B1/B2</code>.</li>
+      <li><code>C3</code>: <code>=C1/C2</code>.</li>
+    </ol>
+    <div class="goalbox"><b>Target:</b> budget one 30 per year, sturdy one 22.50 per year.</div>
+    <div class="sheet" data-sheet='{"id":"costperuse","cols":3,"rows":3,
+      "seed":{"A1":"Price","B1":"60","C1":"180","A2":"Years it lasts","B2":"2","C2":"8","A3":"Cost per year"},
+      "goals":[
+        {"cell":"B3","expected":30,"requireFormula":true,"label":"B3 = price / years"},
+        {"cell":"C3","expected":22.5,"requireFormula":true,"label":"C3 = price / years"}
+      ]}'></div>
+    <p class="soft">The trick generalizes: cost per use, cost per gig, cost per student, cost per mile. Whenever two options refuse to compare, divide both by the thing you actually care about and they will.</p>
+  </section>
+
+  <section class="step" id="s9">
+    <span class="stepnum">SANDBOX</span>
+    <h2>Ask your own question.</h2>
+    <p>A bigger grid, no goals, no checker. Pick a question you actually have and rough it out. Some starters:</p>
+    <ul class="plain">
+      <li>What would moving to a cheaper place really save in a year?</li>
+      <li>What does my coffee habit cost per semester?</li>
+      <li>How many lessons do I need to teach before the new amp is paid off?</li>
+      <li>Which of two summer plans leaves me with more in September?</li>
+    </ul>
+    <p>Shape to aim for: labels down the left, inputs you can change, formulas that point at them, and if you want a straight answer, an IF verdict at the bottom.</p>
+    <div class="sheet" data-sheet='{"id":"sandbox","cols":4,"rows":6}'></div>
+  </section>
+
+  <section class="step" id="examples">
+    <span class="stepnum">EXAMPLE SHEETS</span>
+    <h2>Real sheets to open and dissect.</h2>
+    <p>Reading other people's spreadsheets is how you get good, the same way listening is how you learn to play. Everything below is free, lives in (or copies into) Google Sheets, and asks for no signup. Pick your level, open one, and go hunting for the three jobs: labels, inputs, formulas.</p>
+
+    <div class="excard">
+      <span class="exlevel" style="background:var(--clay)">Simple</span>
+      <h3>Google's own Monthly Budget template</h3>
+      <p>Open <a class="exlink" href="https://sheets.google.com">sheets.google.com</a>, click Template gallery at the top, choose Monthly budget. It is the cleanest beginner sheet there is: a summary page fed by a transactions page.</p>
+      <p class="soft">Your mission: click the big total on the summary tab and read its formula. Where does the number actually come from?</p>
+    </div>
+
+    <div class="excard">
+      <span class="exlevel" style="background:var(--clay)">Simple</span>
+      <h3>Spreadsheet Class template library</h3>
+      <p><a class="exlink" href="https://www.spreadsheetclass.com/templates/">spreadsheetclass.com/templates</a> has two dozen free small templates: to-do lists, expense trackers, schedules, a gradebook. Small enough to understand completely.</p>
+      <p class="soft">Your mission: copy one, then break it on purpose and fix it. That is a full lesson in ten minutes.</p>
+    </div>
+
+    <div class="excard">
+      <span class="exlevel" style="background:var(--ocean)">Intermediate</span>
+      <h3>The Measure of a Plan: Budget Tracking Tool</h3>
+      <p><a class="exlink" href="https://www.themeasureofaplan.com/budget-tracking-tool/">themeasureofaplan.com/budget-tracking-tool</a> is a genuinely free tracker with a dashboard: you enter transactions, and charts of income, spending, and savings build themselves.</p>
+      <p class="soft">Your mission: trace one dashboard chart back to the cells it reads. It is the budget scenario from this page, grown up.</p>
+    </div>
+
+    <div class="excard">
+      <span class="exlevel" style="background:var(--sage-deep)">Advanced</span>
+      <h3>Aspire Budgeting</h3>
+      <p><a class="exlink" href="https://www.aspirebudget.com">aspirebudget.com</a> is a full zero-based budgeting system in one Google Sheet: every dollar gets assigned a job, and a dashboard tracks category balances and monthly activity.</p>
+      <p class="soft">Your mission: figure out why it is split across tabs, and what each tab is allowed to know about the others. That is spreadsheet architecture.</p>
+    </div>
+
+    <div class="excard">
+      <span class="exlevel" style="background:var(--sage-deep)">Advanced</span>
+      <h3>Vertex42: Loan Amortization Schedule</h3>
+      <p><a class="exlink" href="https://www.vertex42.com/ExcelTemplates/loan-amortization-schedule.html">vertex42.com</a> offers a free Google Sheets loan amortizer: payment size, interest versus principal, and what extra payments actually save.</p>
+      <p class="soft">Your mission: find the PMT function inside, then change one input and explain to yourself why the payoff date moved. Student loans stop being abstract right about here.</p>
+    </div>
+
+    <p class="soft">Not sure which tier is yours? The <a class="exlink" href="lhum400-spreadsheet-level-quiz.html">two-minute level quiz</a> will point you at a starting line. Prefer to watch before you touch? Three vetted short videos live in <a class="exlink" href="lhum400-spreadsheet-explorations.html">Spreadsheet Explorations</a>.</p>
+  </section>
+
+  <section class="step" id="s10">
+    <span class="stepnum">NEXT</span>
+    <h2>Now do it for real.</h2>
+    <ol class="steps">
+      <li>Go to <span class="accent">sheets.google.com</span>, click <b>Blank spreadsheet</b>.</li>
+      <li>Rebuild the budget from Scenario 2: labels in A, numbers in B, the two formulas.</li>
+      <li>Then rebuild the scenario that bit you hardest, with your own real numbers.</li>
+    </ol>
+    <p>The real thing also has powers this page does not:</p>
+    <ul class="plain">
+      <li>Charts: select your numbers, then Insert &gt; Chart, and the picture updates with the data.</li>
+      <li>Sorting and filtering, for when your rows number in the hundreds.</li>
+      <li>Sharing, so a bandmate or roommate can argue with your inputs instead of your conclusions.</li>
+    </ul>
+    <div class="callout"><b>Same three jobs, same <code>=</code>, same colon for ranges.</b> Sheets, Excel, and Numbers are one grid in different clothes.</div>
+  </section>
+
+</div>
+
+<footer class="end">
+  <div class="big">A box can label, hold, or calculate.</div>
+  <p>That's the whole secret. The rest is asking better questions.</p>
+</footer>
+
+<a class="toplink" href="#top" aria-label="back to top">&uarr;</a>
+
+<script>
+/* ===== reference helpers ===== */
+function colToIndex(letters){let n=0;for(const ch of letters)n=n*26+(ch.charCodeAt(0)-64);return n-1;}
+function indexToCol(i){let s='';i=i+1;while(i>0){const r=(i-1)%26;s=String.fromCharCode(65+r)+s;i=Math.floor((i-1)/26);}return s;}
+function splitRef(ref){const m=/^([A-Z]+)([0-9]+)$/.exec(ref);if(!m)return null;return{col:colToIndex(m[1]),row:parseInt(m[2],10)-1};}
+function isRef(w){return /^[A-Z]+[0-9]+$/.test(w);}
+function expandRange(a,b){const A=splitRef(a),B=splitRef(b);if(!A||!B)throw'bad range';const c1=Math.min(A.col,B.col),c2=Math.max(A.col,B.col),r1=Math.min(A.row,B.row),r2=Math.max(A.row,B.row);const out=[];for(let r=r1;r<=r2;r++)for(let c=c1;c<=c2;c++)out.push(indexToCol(c)+(r+1));return out;}
+function fmt(n){if(typeof n==='string')return n;if(typeof n!=='number'||!isFinite(n))return'#ERROR';let r=Math.round(n*100)/100;if(Object.is(r,-0))r=0;return Number.isInteger(r)?String(r):r.toFixed(2);}
+
+function tokenize(s){const t=[];let i=0;while(i<s.length){const c=s[i];if(c===' '){i++;continue;}
+  if(c==='"'){const j=s.indexOf('"',i+1);if(j<0)throw'unclosed quote';t.push({t:'str',v:s.slice(i+1,j)});i=j+1;continue;}
+  if(/[0-9.]/.test(c)){let j=i+1;while(j<s.length&&/[0-9.]/.test(s[j]))j++;const num=parseFloat(s.slice(i,j));if(isNaN(num))throw'bad number';t.push({t:'num',v:num});i=j;continue;}
+  if(/[A-Za-z]/.test(c)){let j=i+1;while(j<s.length&&/[A-Za-z0-9]/.test(s[j]))j++;t.push({t:'word',v:s.slice(i,j).toUpperCase()});i=j;continue;}
+  if(c==='<'||c==='>'){if(s[i+1]==='='){t.push({t:'op',v:c+'='});i+=2;continue;}
+    if(c==='<'&&s[i+1]==='>'){t.push({t:'op',v:'<>'});i+=2;continue;}
+    t.push({t:'op',v:c});i++;continue;}
+  if(c==='='){t.push({t:'op',v:'='});i++;continue;}
+  if('+-*/(),:'.includes(c)){t.push({t:'op',v:c});i++;continue;}
+  throw'bad char';}return t;}
+
+const CMP_OPS=['<','>','<=','>=','=','<>'];
+
+function createSheet(host){
+  const cfg=JSON.parse(host.getAttribute('data-sheet'));
+  const cols=cfg.cols, rows=cfg.rows, seed=cfg.seed||{}, goals=cfg.goals||null;
+  const data=Object.assign({},seed);
+  const tdMap={};
+  let sel='A1', dragging=false, anchor=null, editing=false;
+
+  function cellNumber(addr,stack){if(stack.has(addr))throw'cycle';const raw=(data[addr]||'').trim();if(raw==='')return 0;if(raw[0]==='='){const s2=new Set(stack);s2.add(addr);return parseFormula(raw.slice(1),s2);}const n=Number(raw);return isNaN(n)?0:n;}
+  function cellNumberOrNull(addr,stack){if(stack.has(addr))throw'cycle';const raw=(data[addr]||'').trim();if(raw==='')return null;if(raw[0]==='='){const s2=new Set(stack);s2.add(addr);return parseFormula(raw.slice(1),s2);}const n=Number(raw);return isNaN(n)?null:n;}
+  function applyFunc(name,args,stack){
+    if(name==='IF'){if(args.length!==3||!('value'in args[0])||!('value'in args[1])||!('value'in args[2]))throw'IF needs 3 parts';
+      const cond=args[0].value;if(typeof cond!=='number')throw'IF test must be a comparison';
+      return cond!==0?args[1].value:args[2].value;}
+    const nums=[];for(const a of args){if('value'in a){if(typeof a.value==='number')nums.push(a.value);}else for(const addr of expandRange(a.range[0],a.range[1])){const v=cellNumberOrNull(addr,stack);if(typeof v==='number')nums.push(v);}}
+    switch(name){case'SUM':return nums.reduce((x,y)=>x+y,0);case'AVERAGE':return nums.length?nums.reduce((x,y)=>x+y,0)/nums.length:0;case'MIN':return nums.length?Math.min(...nums):0;case'MAX':return nums.length?Math.max(...nums):0;case'COUNT':return nums.length;
+      case'ROUND':{if(!nums.length)throw'ROUND needs a number';const p=Math.pow(10,nums[1]||0);return Math.round(nums[0]*p)/p;}
+      default:throw'unknown function';}}
+
+  function parseFormula(expr,stack){
+    const toks=tokenize(expr);let pos=0;
+    const peek=()=>toks[pos], eat=()=>toks[pos++], expect=(v)=>{const tk=eat();if(!tk||tk.v!==v)throw'expected '+v;};
+    function needNum(v){if(typeof v!=='number')throw'text in math';return v;}
+    function parseCompare(){let v=parseExpr();
+      while(peek()&&peek().t==='op'&&CMP_OPS.includes(peek().v)){const op=eat().v,r=parseExpr();
+        let res;
+        if(typeof v==='string'||typeof r==='string'){
+          if(op==='=')res=String(v).toUpperCase()===String(r).toUpperCase();
+          else if(op==='<>')res=String(v).toUpperCase()!==String(r).toUpperCase();
+          else throw'cannot compare text with '+op;
+        }else{
+          switch(op){case'<':res=v<r;break;case'>':res=v>r;break;case'<=':res=v<=r;break;case'>=':res=v>=r;break;case'=':res=v===r;break;case'<>':res=v!==r;break;}
+        }
+        v=res?1:0;}
+      return v;}
+    function parseExpr(){let v=parseTerm();while(peek()&&peek().t==='op'&&(peek().v==='+'||peek().v==='-')){const op=eat().v,r=parseTerm();v=op==='+'?needNum(v)+needNum(r):needNum(v)-needNum(r);}return v;}
+    function parseTerm(){let v=parseFactor();while(peek()&&peek().t==='op'&&(peek().v==='*'||peek().v==='/')){const op=eat().v,r=parseFactor();if(op==='/'){if(needNum(r)===0)throw'div0';v=needNum(v)/r;}else v=needNum(v)*needNum(r);}return v;}
+    function parseFactor(){const tk=peek();if(!tk)throw'eof';
+      if(tk.t==='op'&&tk.v==='-'){eat();return -needNum(parseFactor());}
+      if(tk.t==='op'&&tk.v==='+'){eat();return needNum(parseFactor());}
+      if(tk.t==='op'&&tk.v==='('){eat();const v=parseCompare();expect(')');return v;}
+      if(tk.t==='num'){eat();return tk.v;}
+      if(tk.t==='str'){eat();return tk.v;}
+      if(tk.t==='word'){eat();
+        if(peek()&&peek().t==='op'&&peek().v==='('){eat();const args=[];
+          if(!(peek()&&peek().t==='op'&&peek().v===')')){args.push(parseArg());while(peek()&&peek().t==='op'&&peek().v===','){eat();args.push(parseArg());}}
+          expect(')');return applyFunc(tk.v,args,stack);}
+        if(isRef(tk.v))return cellNumber(tk.v,stack);throw'unknown name';}
+      throw'unexpected';}
+    function parseArg(){const tk=peek();
+      if(tk&&tk.t==='word'&&isRef(tk.v)&&toks[pos+1]&&toks[pos+1].t==='op'&&toks[pos+1].v===':'){const a=eat().v;eat();const b=eat();if(!b||b.t!=='word'||!isRef(b.v))throw'bad range';return{range:[a,b.v]};}
+      return{value:parseCompare()};}
+    const val=parseCompare();if(pos!==toks.length)throw'trailing';
+    if(typeof val==='string')return val;
+    if(typeof val!=='number'||!isFinite(val))throw'nan';return val;}
+
+  function displayOf(addr){const raw=(data[addr]||'').trim();
+    if(raw==='')return{text:'',cls:'empty'};
+    if(raw[0]==='='){try{return{text:fmt(parseFormula(raw.slice(1),new Set([addr]))),cls:'form'};}catch(e){return{text:'#ERROR',cls:'err'};}}
+    return{text:raw,cls:isNaN(Number(raw))?'label':'num'};}
+
+  /* ---- DOM ---- */
+  host.innerHTML='';
+  const toolbar=document.createElement('div');toolbar.className='toolbar';
+  const nameBox=document.createElement('div');nameBox.className='namebox';nameBox.textContent=sel;
+  const fx=document.createElement('div');fx.className='fx';fx.textContent='fx';
+  const fbar=document.createElement('input');fbar.className='fbar';fbar.setAttribute('aria-label','formula bar');fbar.spellcheck=false;
+  const fenter=document.createElement('button');fenter.className='fenter';fenter.textContent='Enter';
+  toolbar.append(nameBox,fx,fbar,fenter);
+
+  const scroll=document.createElement('div');scroll.className='gridscroll';scroll.tabIndex=0;
+  const table=document.createElement('table');table.className='ss';
+  const thead=document.createElement('tr');
+  const corner=document.createElement('th');corner.className='corner';thead.appendChild(corner);
+  for(let c=0;c<cols;c++){const th=document.createElement('th');th.textContent=indexToCol(c);thead.appendChild(th);}
+  table.appendChild(thead);
+  for(let r=0;r<rows;r++){const tr=document.createElement('tr');
+    const rh=document.createElement('th');rh.textContent=(r+1);tr.appendChild(rh);
+    for(let c=0;c<cols;c++){const addr=indexToCol(c)+(r+1);const td=document.createElement('td');td.dataset.addr=addr;tdMap[addr]=td;tr.appendChild(td);}
+    table.appendChild(tr);}
+  scroll.appendChild(table);
+
+  const hint=document.createElement('div');hint.className='hintbar';
+  hint.textContent='Click a box, then type in the bar and press Enter. Or double-click a box.';
+  host.append(toolbar,scroll,hint);
+
+  let checkMsg=null;
+  const tools=document.createElement('div');tools.className='sheettools';
+  if(goals){
+    const bCheck=document.createElement('button');bCheck.className='btn-check';bCheck.textContent='Check my work';
+    const bReset=document.createElement('button');bReset.className='btn-reset';bReset.textContent='Reset';
+    tools.append(bCheck,bReset);
+    checkMsg=document.createElement('div');checkMsg.className='checkmsg';
+    host.append(tools,checkMsg);
+    bCheck.onclick=runCheck;bReset.onclick=resetSheet;
+  }else{
+    const bReset=document.createElement('button');bReset.className='btn-reset';bReset.textContent='Reset';
+    tools.appendChild(bReset);host.appendChild(tools);bReset.onclick=resetSheet;
+  }
+
+  /* ---- render ---- */
+  function recompute(){
+    for(const addr in tdMap){
+      const td=tdMap[addr];
+      if(td.firstChild&&td.firstChild.classList&&td.firstChild.classList.contains('ced'))continue;
+      const d=displayOf(addr);
+      td.textContent=d.text;
+      td.className='';
+      if(d.cls==='label')td.classList.add('t-label');
+      else if(d.cls==='num')td.classList.add('t-num');
+      else if(d.cls==='form')td.classList.add('t-form');
+      else if(d.cls==='err')td.classList.add('t-err');
+    }
+    paintSelection();
+  }
+  function paintSelection(range){
+    for(const addr in tdMap){tdMap[addr].classList.remove('sel','inrange');}
+    if(range&&range.length>1)range.forEach(a=>{if(tdMap[a])tdMap[a].classList.add('inrange');});
+    if(tdMap[sel])tdMap[sel].classList.add('sel');
+  }
+  function selectCell(addr){
+    sel=addr;nameBox.textContent=addr;fbar.value=data[addr]||'';paintSelection();
+  }
+  function commit(addr,val){
+    const v=(val||'').trim();
+    if(v==='')delete data[addr];else data[addr]=v;
+    recompute();
+  }
+
+  /* ---- inline editing ---- */
+  function startEdit(addr,initial){
+    if(editing)return;
+    editing=true;
+    selectCell(addr);
+    const td=tdMap[addr];
+    td.textContent='';
+    const inp=document.createElement('input');inp.className='ced';inp.spellcheck=false;
+    inp.value=(initial!=null)?initial:(data[addr]||'');
+    td.appendChild(inp);inp.focus();
+    if(initial==null)inp.select();else inp.setSelectionRange(inp.value.length,inp.value.length);
+    let done=false;
+    function finish(move){
+      if(done)return;done=true;editing=false;
+      const val=inp.value;
+      if(inp.parentNode)inp.parentNode.removeChild(inp);   // remove BEFORE recompute so the cell re-renders
+      commit(addr,val);
+      if(move)moveSel(addr,move[0],move[1]);else selectCell(addr);
+    }
+    inp.addEventListener('keydown',ev=>{
+      if(ev.key==='Enter'){ev.preventDefault();finish([1,0]);scroll.focus();}
+      else if(ev.key==='Tab'){ev.preventDefault();finish([0,1]);scroll.focus();}
+      else if(ev.key==='Escape'){done=true;editing=false;if(inp.parentNode)inp.parentNode.removeChild(inp);recompute();selectCell(addr);}
+    });
+    inp.addEventListener('blur',()=>finish(null));
+  }
+  function moveSel(addr,dr,dc){
+    const p=splitRef(addr);
+    const r=Math.min(rows-1,Math.max(0,p.row+dr));
+    const c=Math.min(cols-1,Math.max(0,p.col+dc));
+    selectCell(indexToCol(c)+(r+1));
+  }
+
+  /* ---- pointer + range select ---- */
+  function addrFromEvent(e){const td=e.target.closest('td');return td?td.dataset.addr:null;}
+  table.addEventListener('mousedown',e=>{
+    if(e.button!==0||editing)return;
+    const addr=addrFromEvent(e);if(!addr)return;
+    dragging=true;anchor=addr;selectCell(addr);scroll.focus();
+  });
+  table.addEventListener('mouseover',e=>{
+    if(!dragging)return;const addr=addrFromEvent(e);if(!addr)return;
+    const rng=expandRange(anchor,addr);paintSelection(rng);
+    nameBox.textContent=(anchor===addr)?addr:rangeLabel(anchor,addr);
+  });
+  function rangeLabel(a,b){const A=splitRef(a),B=splitRef(b);
+    const first=indexToCol(Math.min(A.col,B.col))+(Math.min(A.row,B.row)+1);
+    const last=indexToCol(Math.max(A.col,B.col))+(Math.max(A.row,B.row)+1);
+    return first+':'+last;}
+  document.addEventListener('mouseup',()=>{dragging=false;});
+  table.addEventListener('dblclick',e=>{const addr=addrFromEvent(e);if(addr)startEdit(addr);});
+
+  /* keyboard on the grid (grid holds focus via scroll.tabIndex) */
+  scroll.addEventListener('keydown',e=>{
+    if(editing)return;
+    const k=e.key;
+    if(k==='Enter'){e.preventDefault();startEdit(sel);return;}
+    if(k==='Backspace'||k==='Delete'){e.preventDefault();commit(sel,'');selectCell(sel);return;}
+    if(k==='ArrowUp'){e.preventDefault();moveSel(sel,-1,0);return;}
+    if(k==='ArrowDown'){e.preventDefault();moveSel(sel,1,0);return;}
+    if(k==='ArrowLeft'){e.preventDefault();moveSel(sel,0,-1);return;}
+    if(k==='ArrowRight'){e.preventDefault();moveSel(sel,0,1);return;}
+    if(k.length===1&&!e.ctrlKey&&!e.metaKey&&!e.altKey){e.preventDefault();startEdit(sel,k);}
+  });
+
+  /* formula bar */
+  function commitBar(){commit(sel,fbar.value);selectCell(sel);}
+  fbar.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();commitBar();}});
+  fenter.addEventListener('click',commitBar);
+
+  /* checking */
+  function runCheck(){
+    let allOk=true;const lines=[];
+    for(const g of goals){
+      const raw=(data[g.cell]||'').trim();
+      let val=null;
+      try{val=raw===''?null:(raw[0]==='='?parseFormula(raw.slice(1),new Set([g.cell])):Number(raw));}catch(e){val=NaN;}
+      let ok=true;const reasons=[];
+      if(typeof g.expected==='string'){
+        if(typeof val!=='string'||val.trim().toUpperCase()!==g.expected.toUpperCase()){ok=false;reasons.push('answer not right yet');}
+      }else{
+        const tol=(g.tol!=null)?g.tol:0.001;
+        if(val===null||typeof val!=='number'||isNaN(val)||Math.abs(val-g.expected)>tol){ok=false;reasons.push('answer not right yet');}
+      }
+      if(g.requireFormula&&raw[0]!=='='){ok=false;reasons.push('use a formula starting with =');}
+      if(!ok)allOk=false;
+      lines.push('<span class="checkline">'+(ok?'✓':'✗')+' '+g.cell+': '+g.label+(ok?'':' &mdash; <i>'+reasons.join('; ')+'</i>')+'</span>');
+    }
+    checkMsg.innerHTML=(allOk?'<span class="ok">Nailed it. ✓</span>':'<span class="no">Almost &mdash; see below.</span>')+lines.join('');
+  }
+  function resetSheet(){for(const k in data)delete data[k];Object.assign(data,seed);if(checkMsg)checkMsg.innerHTML='';selectCell('A1');recompute();}
+
+  recompute();selectCell('A1');
+}
+
+document.querySelectorAll('.sheet[data-sheet]').forEach(createSheet);
+</script>
+</body>
+</html>

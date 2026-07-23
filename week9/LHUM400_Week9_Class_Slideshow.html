@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>LHUM400 Week 9 in Class</title>
+<style>
+  :root {
+    --paper: #F1ECE2;
+    --ink: #2C3742;
+    --ink-soft: #6E7884;
+    --khaki: #A8866A;
+    --khaki-soft: #D9C8AA;
+    --sage: #6B8A82;
+    --blue: #5A7A95;
+    --line: #D8CFBF;
+    --card: rgba(255, 255, 255, 0.66);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .deck {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .slide {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5vh 7vw 9vh;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 500ms ease, transform 500ms ease;
+    pointer-events: none;
+    text-align: center;
+  }
+
+  .slide.active {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* ---- shared bits ---- */
+  .eyebrow {
+    font-size: clamp(0.8rem, 1.05vw, 1rem);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 2.4vh;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7em;
+  }
+  .eyebrow::before {
+    content: "";
+    width: 0.45em;
+    height: 0.45em;
+    background: var(--khaki);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .slide-number {
+    position: absolute;
+    top: 4vh;
+    left: 4vw;
+    font-family: Georgia, ui-serif, serif;
+    font-size: 0.95rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+  }
+  .slide-number::after {
+    content: "";
+    display: block;
+    width: 18px;
+    height: 1px;
+    background: var(--line);
+    margin-top: 4px;
+  }
+
+  .headline {
+    font-family: Georgia, "Times New Roman", ui-serif, serif;
+    font-weight: 400;
+    font-size: clamp(2rem, 4.6vw, 3.9rem);
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+    max-width: 22ch;
+  }
+  .headline .accent { color: var(--khaki); font-style: italic; }
+  .headline .sage  { color: var(--sage);  font-style: italic; }
+
+  .key { color: var(--khaki); }
+
+  .sub {
+    margin-top: 2.6vh;
+    font-size: clamp(1.02rem, 1.5vw, 1.4rem);
+    line-height: 1.5;
+    color: var(--ink-soft);
+    max-width: 44ch;
+  }
+
+  /* ---- cover ---- */
+  .cover .headline { font-size: clamp(2.6rem, 6vw, 5.2rem); max-width: 16ch; }
+  .cover .kicker {
+    margin-top: 3.4vh;
+    font-size: clamp(1rem, 1.5vw, 1.35rem);
+    color: var(--ink);
+    max-width: 40ch;
+    line-height: 1.5;
+  }
+  .cover .when {
+    margin-top: 4vh;
+    font-size: clamp(0.85rem, 1.1vw, 1rem);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  /* ---- overview: agenda + goals ---- */
+  .overview-cols {
+    display: grid;
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 2vw;
+    width: min(90vw, 1120px);
+    margin-top: 2.4vh;
+    text-align: left;
+    align-items: start;
+  }
+  .panel-label {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 1.8vh;
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+  }
+  .panel-label::before {
+    content: "";
+    width: 1.4em; height: 2px; background: var(--khaki);
+  }
+
+  .agenda-list { list-style: none; display: grid; gap: 1.15vh; }
+  .agenda-row { display: flex; align-items: baseline; gap: 1em; }
+  .agenda-time {
+    font-family: Georgia, ui-serif, serif;
+    font-style: italic;
+    color: var(--khaki);
+    font-variant-numeric: tabular-nums;
+    font-size: clamp(1rem, 1.45vw, 1.35rem);
+    min-width: 4.2em;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .agenda-name {
+    font-size: clamp(1.05rem, 1.55vw, 1.45rem);
+    color: var(--ink);
+    line-height: 1.3;
+  }
+  .agenda-row.is-break .agenda-time { color: var(--ink-soft); }
+  .agenda-row.is-break .agenda-name { color: var(--ink-soft); font-style: italic; }
+
+  .goals-panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 3vh 2.2vw;
+  }
+  .goals-list { list-style: none; display: grid; gap: 2vh; }
+  .goals-list li {
+    font-size: clamp(1.05rem, 1.55vw, 1.4rem);
+    line-height: 1.35;
+    color: var(--ink);
+    padding-left: 1.5em;
+    position: relative;
+  }
+  .goals-list li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.6em;
+    width: 0.9em; height: 2px;
+    background: var(--sage);
+  }
+
+  /* ---- big text ---- */
+  .big-text {
+    font-family: Georgia, "Times New Roman", ui-serif, serif;
+    font-size: clamp(3rem, 8vw, 5.5rem);
+    line-height: 1.1;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    max-width: 18ch;
+  }
+  .big-text .accent { color: var(--khaki); font-style: italic; }
+
+  /* ---- steps (instruction slides) ---- */
+  .steps {
+    list-style: none;
+    display: grid;
+    gap: 2.4vh;
+    width: min(82vw, 960px);
+    margin-top: 3vh;
+    text-align: left;
+  }
+  .steps > li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7em;
+    font-size: clamp(1.3rem, 2.2vw, 2.05rem);
+    line-height: 1.28;
+    color: var(--ink);
+  }
+  .step-num {
+    font-family: Georgia, ui-serif, serif;
+    font-style: italic;
+    color: var(--khaki);
+    font-size: clamp(1.35rem, 2.4vw, 2.25rem);
+    line-height: 1;
+    flex-shrink: 0;
+    min-width: 1.4em;
+  }
+  .steps .ask { color: var(--blue); font-style: italic; }
+
+  .callout {
+    margin-top: 3.2vh;
+    width: min(82vw, 960px);
+    text-align: left;
+    background: var(--card);
+    border-left: 5px solid var(--khaki);
+    border-radius: 0 12px 12px 0;
+    padding: 2.2vh 2vw;
+    font-size: clamp(1.1rem, 1.7vw, 1.55rem);
+    line-height: 1.4;
+    color: var(--ink);
+  }
+
+  /* ---- two panels ---- */
+  .panels {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2.2vw;
+    width: min(90vw, 1120px);
+    margin-top: 3vh;
+    text-align: left;
+  }
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    padding: 2.8vh 1.8vw;
+  }
+  .panel .tag {
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 0.9vh;
+  }
+  .panel h3 {
+    font-family: Georgia, ui-serif, serif;
+    font-weight: 400;
+    font-size: clamp(1.4rem, 2.1vw, 1.95rem);
+    line-height: 1.15;
+    color: var(--ink);
+    margin-bottom: 1.8vh;
+  }
+  .panel.a h3 .mark { color: var(--khaki); font-style: italic; }
+  .panel.b h3 .mark { color: var(--sage); font-style: italic; }
+  .panel ul { list-style: none; display: grid; gap: 1.4vh; }
+  .panel li {
+    font-size: clamp(1rem, 1.45vw, 1.32rem);
+    line-height: 1.3;
+    color: var(--ink);
+    padding-left: 1.3em;
+    position: relative;
+  }
+  .panel li::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0.62em;
+    width: 0.7em; height: 2px;
+    background: var(--khaki);
+  }
+  .panel.b li::before { background: var(--sage); }
+
+  /* ---- prompt list ---- */
+  .prompts {
+    list-style: none;
+    display: grid;
+    gap: 2.2vh;
+    width: min(84vw, 1000px);
+    margin-top: 2.8vh;
+    text-align: left;
+  }
+  .prompts > li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.7em;
+    font-size: clamp(1.2rem, 2.05vw, 1.95rem);
+    line-height: 1.28;
+    color: var(--ink);
+  }
+  .pn {
+    font-family: Georgia, ui-serif, serif;
+    font-style: italic;
+    color: var(--blue);
+    font-size: clamp(1.3rem, 2.2vw, 2.1rem);
+    line-height: 1;
+    flex-shrink: 0;
+    min-width: 1.4em;
+  }
+
+  /* ---- closing checklist ---- */
+  .checklist {
+    list-style: none;
+    display: grid;
+    gap: 2vh;
+    width: min(80vw, 940px);
+    margin-top: 3vh;
+    text-align: left;
+  }
+  .checklist > li {
+    display: flex;
+    align-items: baseline;
+    gap: 0.8em;
+    font-size: clamp(1.2rem, 2.05vw, 1.9rem);
+    line-height: 1.28;
+    color: var(--ink);
+  }
+  .checklist .box {
+    flex-shrink: 0;
+    width: 0.95em; height: 0.95em;
+    border: 2px solid var(--khaki);
+    border-radius: 4px;
+    transform: translateY(0.08em);
+  }
+  .nextweek {
+    margin-top: 3.4vh;
+    font-size: clamp(1rem, 1.5vw, 1.35rem);
+    color: var(--ink-soft);
+  }
+  .nextweek .lead { color: var(--khaki); }
+
+  /* ---- persistent chrome ---- */
+  .course-tag {
+    position: fixed;
+    top: 4vh; right: 4vw;
+    font-size: 0.78rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    z-index: 10;
+  }
+  .course-tag .sep { color: var(--khaki); }
+
+  .controls {
+    position: fixed;
+    bottom: 3vh; left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 1.2rem;
+    z-index: 10;
+  }
+  .ctrl {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    cursor: pointer;
+    font-size: 1.05rem;
+    display: grid;
+    place-items: center;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .ctrl:hover { background: var(--khaki-soft); border-color: var(--khaki-soft); }
+  .counter {
+    font-size: 0.9rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+    font-variant-numeric: tabular-nums;
+    min-width: 4ch;
+    text-align: center;
+  }
+
+  .dots {
+    position: fixed;
+    bottom: 1.3vh; left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 7px;
+    z-index: 10;
+  }
+  .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--line);
+    cursor: pointer;
+    transition: background 250ms ease;
+  }
+  .dot.active { background: var(--khaki); }
+  .dot:hover { background: var(--khaki-soft); }
+
+  @media (max-width: 820px) {
+    .overview-cols { grid-template-columns: 1fr; gap: 3vh; }
+    .panels { grid-template-columns: 1fr; }
+    .course-tag { display: none; }
+  }
+</style>
+</head>
+
+<body>
+
+<div class="deck" id="deck">
+
+  <!-- 1: COVER / DO NOW -->
+  <section class="slide cover active">
+    <div class="slide-number">01</div>
+    <div class="eyebrow">LHUM400 / Summer 2026 / Week 9</div>
+    <h1 class="headline">Two jobs <span class="accent">today.</span></h1>
+    <p class="kicker">Do Now, on the board as you sit down: a booker asks for one link to see what you do. Right now, what would you send? If the honest answer is "my Instagram" or "nothing," that changes by 1:00. Today we also finish what we started last week with spreadsheets, this time in groups, on something you'll actually keep using.</p>
+    <div class="when">Thursday, July 23 &nbsp;/&nbsp; 11:00 to 1:00</div>
+  </section>
+
+  <!-- 2: OVERVIEW -->
+  <section class="slide">
+    <div class="slide-number">02</div>
+    <div class="eyebrow">Today at a glance</div>
+    <h1 class="headline" style="font-size: clamp(1.7rem, 3vw, 2.5rem); margin-bottom: 1vh;">A live link and a working plan.</h1>
+    <div class="overview-cols">
+      <div>
+        <div class="panel-label">Agenda</div>
+        <ul class="agenda-list">
+          <li class="agenda-row"><span class="agenda-time">11:00</span><span class="agenda-name">Do Now + the 5-second test</span></li>
+          <li class="agenda-row"><span class="agenda-time">11:22</span><span class="agenda-name">Group task: Career Intel Board</span></li>
+          <li class="agenda-row is-break"><span class="agenda-time">12:07</span><span class="agenda-name">Break (8 minutes)</span></li>
+          <li class="agenda-row"><span class="agenda-time">12:15</span><span class="agenda-name">5 sections + pick your tool</span></li>
+          <li class="agenda-row"><span class="agenda-time">12:27</span><span class="agenda-name">Build sprint: site + hire-me page</span></li>
+          <li class="agenda-row"><span class="agenda-time">12:52</span><span class="agenda-name">Close</span></li>
+        </ul>
+      </div>
+      <div class="goals-panel">
+        <div class="panel-label">By the end of today you will</div>
+        <ul class="goals-list">
+          <li>Have a <span class="key">live URL</span> you can hand someone, even if it is still rough.</li>
+          <li>Have your <span class="key">hire-me page</span> built straight from your Services and Rates doc.</li>
+          <li>Walk out with a group-built <span class="key">spreadsheet</span> you can keep using after today.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3: OPEN - 5 SECOND TEST -->
+  <section class="slide">
+    <div class="slide-number">03</div>
+    <div class="eyebrow">11:00 to 11:12 &nbsp;&middot;&nbsp; Play</div>
+    <h1 class="headline" style="font-size: clamp(1.7rem, 3.2vw, 2.6rem); margin-bottom: 3vh;">The 5-second test.</h1>
+    <p class="sub" style="margin-bottom: 3vh;">I put a few real musician sites on screen, five seconds each. That is how long a booker actually looks.</p>
+    <ul class="steps">
+      <li><span class="step-num">1</span> <span class="ask">Snap judgment.</span> After five seconds: do you know who they are and what they do? Hire or skip?</li>
+      <li><span class="step-num">2</span> <span class="ask">Name it.</span> What made the good ones work? What made the bad ones lose you?</li>
+    </ul>
+    <div class="callout">Nobody reads your site. They scan it. Keep that in mind for your hire-me page later today.</div>
+  </section>
+
+  <!-- 4: BRIDGE -->
+  <section class="slide">
+    <div class="slide-number">04</div>
+    <div class="eyebrow">11:12 to 11:22 &nbsp;&middot;&nbsp; Bridge</div>
+    <h1 class="big-text">Last week: spreadsheets for decisions. Today: a plan you can <span class="accent">act on.</span></h1>
+    <p class="sub" style="margin-top: 4vh;">Last week we used a spreadsheet to think through financial decisions, real numbers plus hypotheticals. Today your group builds one that tracks your actual next career move: who you're researching, or who you need to reach out to. If you missed last week, your group has you covered, we're building together.</p>
+  </section>
+
+  <!-- 4B: SPREADSHEET TASK - TRACK CHOICE -->
+  <section class="slide">
+    <div class="slide-number">05</div>
+    <div class="eyebrow">11:22 to 12:07 &nbsp;&middot;&nbsp; Group Task</div>
+    <h1 class="headline" style="font-size: clamp(1.7rem, 3.2vw, 2.6rem); margin-bottom: 3vh;">Career Intel Board. Pick your track.</h1>
+    <div class="panels">
+      <div class="panel a">
+        <div class="tag">Track A</div>
+        <h3>Industry <span class="mark">Research Matrix.</span></h3>
+        <ul>
+          <li>Research roles, companies, or gig paths in your direction</li>
+          <li>Log pay range, entry barrier, network need, remote-friendly</li>
+          <li>Color-scale format to see your best-fit options at a glance</li>
+          <li>Good fit if you're still mapping the landscape</li>
+        </ul>
+      </div>
+      <div class="panel b">
+        <div class="tag">Track B</div>
+        <h3>Outreach <span class="mark">Tracker.</span></h3>
+        <ul>
+          <li>Log real contacts: name, how you know them, next step</li>
+          <li>Track date of last contact and status (cold, warm, active)</li>
+          <li>Rule-based format: overdue turns red, warm turns green</li>
+          <li>Good fit if you already have people you should be reaching</li>
+        </ul>
+      </div>
+    </div>
+    <p class="sub" style="margin-top: 2.6vh; color: var(--ink-soft); font-style: italic;">Same spreadsheet skills either way. Pick whichever is actually useful to you right now.</p>
+  </section>
+
+  <!-- 4C: SPREADSHEET TASK - MECHANICS -->
+  <section class="slide">
+    <div class="slide-number">06</div>
+    <div class="eyebrow">Group task, how it runs</div>
+    <h1 class="headline" style="font-size: clamp(1.7rem, 3.2vw, 2.6rem); margin-bottom: 3vh;">Groups of 3 to 4, by interest.</h1>
+    <ul class="steps">
+      <li><span class="step-num">1</span> Find your group: cluster by the career direction or track you're most curious about.</li>
+      <li><span class="step-num">2</span> Pick Track A or B and open a new Google Sheet, shared with everyone in the group.</li>
+      <li><span class="step-num">3</span> Research and fill in real rows, at least one entry per person.</li>
+      <li><span class="step-num">4</span> Apply conditional formatting: Format &gt; Conditional formatting. Use the cheat card at your table.</li>
+      <li><span class="step-num">5</span> If your group has someone who missed last week, they drive the keyboard for the formatting step.</li>
+    </ul>
+    <div class="callout">This isn't a worksheet you throw away. Keep the link. You can reopen this in August and it still works for you.</div>
+  </section>
+
+  <!-- 5: TEACH - 5 SECTIONS -->
+  <section class="slide">
+    <div class="slide-number">07</div>
+    <div class="eyebrow">12:15 to 12:21 &nbsp;&middot;&nbsp; Learn</div>
+    <h1 class="headline" style="font-size: clamp(1.7rem, 3.2vw, 2.6rem); margin-bottom: 3vh;">The only five sections you need.</h1>
+    <div class="panels">
+      <div class="panel a">
+        <div class="tag">You already wrote most of this</div>
+        <h3>The <span class="mark">core four.</span></h3>
+        <ul>
+          <li>Home and about: who you are in one breath</li>
+          <li>Work: a few strong samples, not everything</li>
+          <li>Hire me: your services and rates</li>
+          <li>Contact: one clear way to reach you</li>
+        </ul>
+      </div>
+      <div class="panel b">
+        <div class="tag">Nice to have</div>
+        <h3>The <span class="mark">fifth.</span></h3>
+        <ul>
+          <li>Resume, as a download</li>
+          <li>Pull your about from your artist statement</li>
+          <li>Pull hire-me from your rates doc</li>
+          <li>Skip anything you cannot fill well yet</li>
+        </ul>
+      </div>
+    </div>
+    <p class="sub" style="margin-top: 2.6vh; color: var(--ink-soft); font-style: italic;">A clean one-page site beats an empty five-page one. Quality over quantity.</p>
+  </section>
+
+  <!-- 6: TEACH - PICK YOUR TOOL -->
+  <section class="slide">
+    <div class="slide-number">08</div>
+    <div class="eyebrow">12:21 to 12:27 &nbsp;&middot;&nbsp; Choose</div>
+    <h1 class="headline" style="font-size: clamp(1.7rem, 3.2vw, 2.6rem); margin-bottom: 3vh;">Pick your tool, then stop shopping.</h1>
+    <ul class="steps">
+      <li><span class="step-num">1</span> <span class="ask">Fastest to live:</span> Carrd or Google Sites. A real one-pager in one class. Free or nearly free.</li>
+      <li><span class="step-num">2</span> <span class="ask">More room to grow:</span> Wix or Squarespace. More power, more polish, a little slower to launch.</li>
+      <li><span class="step-num">3</span> <span class="ask">You code:</span> plain HTML and GitHub Pages. Total control, only if you already know how.</li>
+    </ul>
+    <div class="callout">There is no wrong choice. The wrong move is spending the whole class deciding. Pick in two minutes and start building.</div>
+  </section>
+
+  <!-- 7: APPLY - BUILD SPRINT (SKELETON + HIRE-ME, MERGED FOR TIME) -->
+  <section class="slide">
+    <div class="slide-number">09</div>
+    <div class="eyebrow">12:27 to 12:52 &nbsp;&middot;&nbsp; Build</div>
+    <h1 class="headline" style="font-size: clamp(1.7rem, 3.2vw, 2.6rem); margin-bottom: 3vh;">Laptops open. Build both pages.</h1>
+    <p class="sub" style="margin-bottom: 2.2vh;">Get the skeleton live first, then the page that earns you money.</p>
+    <ul class="steps">
+      <li><span class="step-num">1</span> Pick a template, put your name and one-line about on the home page, publish. Rough and live beats perfect and unpublished.</li>
+      <li><span class="step-num">2</span> Open your Services and Rates doc and move it onto a hire-me page, almost word for word.</li>
+      <li><span class="step-num">3</span> End that page with one clear next step: how someone reaches you to book.</li>
+    </ul>
+    <div class="callout">I'm circulating the whole time. If you're stuck picking a template, that's my cue to come find you.</div>
+  </section>
+
+  <!-- 10: CLOSE -->
+  <section class="slide">
+    <div class="slide-number">10</div>
+    <div class="eyebrow">12:52 to 1:00 &nbsp;&middot;&nbsp; Wrap up</div>
+    <h1 class="headline" style="font-size: clamp(1.7rem, 3.2vw, 2.6rem); margin-bottom: 3vh;">Before you go.</h1>
+    <ul class="checklist">
+      <li><span class="box"></span> You have a live URL. Drop it in the class chat so we can all see it.</li>
+      <li><span class="box"></span> Your hire-me page exists, built from your rates doc.</li>
+      <li><span class="box"></span> Your group's Career Intel Board is shared and formatted. Save the link, it's yours to keep using.</li>
+      <li><span class="box"></span> Keep building the site this week. Assignment 14 is the polished version of what you started today.</li>
+    </ul>
+    <div class="nextweek" style="margin-top: 5vh;"><span class="lead">Coming up:</span> next class we hit the money side, pricing a private lesson, the investing basics, and closing out your client work. Then the last two classes are yours: you present your site and your plan.</div>
+  </section>
+
+</div>
+
+<div class="course-tag">LHUM400 <span class="sep">/</span> <span id="slide-count">1 of 10</span></div>
+
+<div class="controls">
+  <button class="ctrl" id="prev" title="Previous slide">←</button>
+  <span class="counter" id="counter">1 / 10</span>
+  <button class="ctrl" id="next" title="Next slide">→</button>
+</div>
+
+<div class="dots" id="dots"></div>
+
+<script>
+  let current = 0;
+  const slides = document.querySelectorAll('.slide');
+  const totalSlides = slides.length;
+
+  function updateSlide(n) {
+    slides.forEach(s => s.classList.remove('active'));
+    slides[n].classList.add('active');
+    document.getElementById('counter').textContent = `${n + 1} / ${totalSlides}`;
+    document.getElementById('slide-count').textContent = `${n + 1} of ${totalSlides}`;
+    updateDots();
+  }
+
+  function buildDots() {
+    const dotsContainer = document.getElementById('dots');
+    for (let i = 0; i < totalSlides; i++) {
+      const dot = document.createElement('button');
+      dot.className = 'dot' + (i === 0 ? ' active' : '');
+      dot.title = `Go to slide ${i + 1}`;
+      dot.addEventListener('click', () => goToSlide(i));
+      dotsContainer.appendChild(dot);
+    }
+  }
+
+  function updateDots() {
+    document.querySelectorAll('.dot').forEach((dot, i) => {
+      dot.classList.toggle('active', i === current);
+    });
+  }
+
+  function goToSlide(n) {
+    current = (n + totalSlides) % totalSlides;
+    updateSlide(current);
+  }
+
+  function nextSlide() {
+    goToSlide(current + 1);
+  }
+
+  function prevSlide() {
+    goToSlide(current - 1);
+  }
+
+  document.getElementById('next').addEventListener('click', nextSlide);
+  document.getElementById('prev').addEventListener('click', prevSlide);
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight') nextSlide();
+    if (e.key === 'ArrowLeft') prevSlide();
+  });
+
+  buildDots();
+</script>
+
+</body>
+</html>

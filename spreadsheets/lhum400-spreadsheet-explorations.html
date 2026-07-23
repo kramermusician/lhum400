@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spreadsheet Explorations</title>
+<style>
+  :root{
+    --cream:#f4efe6;
+    --ink:#2b2823;
+    --sage:#7a8b6f;
+    --sage-deep:#556049;
+    --ocean:#356170;
+    --clay:#b45f3e;
+    --gold:#c99a4e;
+    --paper:#fffdf8;
+    --line:#cdc4b0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    font-family:"Avenir Next","Segoe UI",system-ui,sans-serif;
+    background:var(--cream);
+    color:var(--ink);
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:860px;margin:0 auto;padding:0 20px 90px;}
+
+  header.hero{
+    text-align:center;
+    padding:7vh 20px 4vh;
+    background:linear-gradient(180deg,#eef2e8 0%,var(--cream) 100%);
+    border-bottom:2px solid var(--line);
+  }
+  .kicker{font-size:14px;letter-spacing:.22em;text-transform:uppercase;color:var(--clay);font-weight:800;margin-bottom:.7em;}
+  header.hero h1{font-size:clamp(30px,5.5vw,50px);color:var(--sage-deep);line-height:1.08;}
+  header.hero p{font-size:clamp(16px,2.3vw,20px);color:#6f685c;max-width:46ch;margin:.7em auto 0;}
+
+  section.card{
+    background:var(--paper);
+    border:2px solid var(--line);
+    border-radius:18px;
+    padding:clamp(20px,4vw,36px);
+    margin-top:30px;
+    box-shadow:0 4px 18px rgba(60,50,30,.05);
+  }
+  .lvl{display:inline-block;font-weight:800;font-size:12px;letter-spacing:.1em;text-transform:uppercase;
+    color:#fff;padding:.28em .95em;border-radius:16px;margin-bottom:.5em;}
+  section.card h2{font-size:clamp(22px,3.5vw,32px);color:var(--sage-deep);line-height:1.15;margin-bottom:.15em;}
+  .meta{font-size:14px;color:#8a8378;margin-bottom:1em;}
+  .videobox{position:relative;width:100%;padding-top:56.25%;border-radius:12px;overflow:hidden;border:2px solid var(--line);background:#000;}
+  .videobox iframe{position:absolute;inset:0;width:100%;height:100%;border:0;}
+  section.card p{font-size:clamp(15px,2.1vw,18px);margin:.7em 0 0;max-width:66ch;}
+  section.card p.soft{color:#736c60;}
+  ul.watch{list-style:none;margin:.6em 0 0;}
+  ul.watch li{font-size:clamp(15px,2vw,17px);margin:.35em 0;padding-left:1.5em;position:relative;}
+  ul.watch li::before{content:"→";position:absolute;left:0;color:var(--sage);font-weight:800;}
+  .mission{background:#f1ede2;border-left:5px solid var(--gold);border-radius:0 10px 10px 0;
+    padding:.7em 1em;margin-top:1em;font-size:clamp(15px,2vw,17px);}
+  .mission b{color:var(--sage-deep);}
+  a{color:var(--ocean);}
+
+  .backbar{text-align:center;margin-top:36px;}
+  .backbar a{display:inline-block;text-decoration:none;font-weight:700;font-size:16px;
+    padding:.6em 1.3em;border-radius:12px;border:2px solid var(--sage-deep);color:var(--sage-deep);margin:0 6px 10px;}
+  .backbar a.primary{background:var(--sage-deep);color:#fff;}
+
+  footer{margin-top:50px;text-align:center;color:#8a8378;font-size:13px;}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="kicker">LHUM 400 &middot; Spreadsheet Explorations</div>
+  <h1>Three short videos, three doors.</h1>
+  <p>Each one is under ten minutes and worth exactly that much of your attention. Watch with a sheet open in the next tab; pausing to try things beats watching twice.</p>
+</header>
+
+<div class="wrap">
+
+  <section class="card">
+    <span class="lvl" style="background:var(--clay)">Basics &middot; 8:28</span>
+    <h2>Google Sheets, the whole tour.</h2>
+    <div class="meta">How to Digital &middot; May 2026</div>
+    <div class="videobox">
+      <iframe src="https://www.youtube-nocookie.com/embed/fWQQ6PlFp48" title="How to Use Google Sheets: Complete Tutorial for Beginners"
+        allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+    </div>
+    <p>One pass over everything: the grid, cell addresses, formatting, formulas, charts, sorting, and sharing. It builds a small expense tracker along the way, which is the same shape as our budget scenario.</p>
+    <ul class="watch">
+      <li>Notice how every skill circles back to the cell address. B3 is column B, row 3; that is the whole coordinate system.</li>
+      <li>When the formula bar appears, watch where the formula lives versus where the answer shows.</li>
+    </ul>
+    <div class="mission"><b>Try it after:</b> rebuild the expense tracker from the video with your own last five real purchases, then add a SUM. Ten minutes, and the skill is yours instead of the video's.</div>
+  </section>
+
+  <section class="card">
+    <span class="lvl" style="background:var(--ocean)">Advanced pick 1 &middot; 9:00</span>
+    <h2>Pivot tables: ask a big pile of data a question.</h2>
+    <div class="meta">Champion Challander Tech &middot; July 2025</div>
+    <div class="videobox">
+      <iframe src="https://www.youtube-nocookie.com/embed/zqIJ3mW436E" title="How to use Pivot Tables in Google Sheets"
+        allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+    </div>
+    <p>Our walkthrough works on grids with ten rows. Real data has a thousand. A pivot table is how you ask "total by month?  by category?  by client?" without writing a single formula, and this video goes from zero to a working pivot on a 100-row table.</p>
+    <ul class="watch">
+      <li>The why comes first: summarize fast, spot patterns. Same idea as this course, put light on the question.</li>
+      <li>Catch the data-range trick: leaving the range open-ended so the pivot updates itself when new rows arrive.</li>
+    </ul>
+    <div class="mission"><b>Try it after:</b> in the Measure of a Plan tracker from our example sheets, find the transactions tab and build one pivot: spending by category. Compare it with the dashboard's own chart; you just rebuilt part of it yourself.</div>
+  </section>
+
+  <section class="card">
+    <span class="lvl" style="background:var(--sage-deep)">Advanced pick 2 &middot; 7:36</span>
+    <h2>VLOOKUP and XLOOKUP: teach sheets to find things.</h2>
+    <div class="meta">Jotform &middot; June 2026</div>
+    <div class="videobox">
+      <iframe src="https://www.youtube-nocookie.com/embed/E2YxV9Dovsc" title="How to Use VLOOKUP and XLOOKUP - Step-by-step Guide"
+        allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>
+    </div>
+    <p>A lookup pulls information from one table into another: type a product name, get its price; type a student, get their section. This one shows the classic VLOOKUP, then the modern XLOOKUP, in Excel and in Google Sheets, which is a nice proof of our line that they are one grid in different clothes.</p>
+    <ul class="watch">
+      <li>Watch what breaks VLOOKUP (it can only look to the right) and how XLOOKUP shrugs that off.</li>
+      <li>Every lookup has the same three parts: what you are looking for, where to look, what to bring back.</li>
+    </ul>
+    <div class="mission"><b>Try it after:</b> make a tiny two-column price list (five items, five prices), then in another corner of the sheet write one XLOOKUP that fetches a price by name. Change the price; watch the lookup follow.</div>
+  </section>
+
+  <div class="backbar">
+    <a class="primary" href="lhum400-spreadsheet-walkthrough.html">Back to the walkthrough</a>
+    <a href="lhum400-spreadsheet-walkthrough.html#examples">Example sheets</a>
+    <a href="lhum400-spreadsheet-level-quiz.html">Find your level</a>
+  </div>
+
+  <footer>Prof. Kramer Gibson - Berklee College of Music</footer>
+</div>
+
+</body>
+</html>
